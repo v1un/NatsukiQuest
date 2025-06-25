@@ -35,28 +35,15 @@ export async function makeChoice(
       injectedLore: loreContext.updatedNarrativeContext,
     });
     
-    // 3. Update the character list with new affinity and status, preserving descriptions and avatars.
-    const updatedCharacters = currentState.characters.map(currentChar => {
-        const aiCharUpdate = aiResponse.updatedCharacters.find(c => c.name === currentChar.name);
-        if (aiCharUpdate) {
-            return {
-                ...currentChar, // keep avatar, description
-                affinity: aiCharUpdate.affinity,
-                status: aiCharUpdate.status,
-            };
-        }
-        return currentChar;
-    });
-
-    // 4. Update memory log.
+    // 3. Update memory log.
     const newMemory = `${currentState.memory}\n- Chose '${choice}', which resulted in: ${aiResponse.lastOutcome}`;
 
-    // 5. Construct the new game state.
+    // 4. Construct the new game state. The AI now returns the full, updated character list.
     const newState: GameState = {
       ...currentState,
       narrative: aiResponse.newNarrative,
       choices: aiResponse.newChoices,
-      characters: updatedCharacters,
+      characters: aiResponse.updatedCharacters, // Directly use the AI's updated list
       inventory: aiResponse.updatedInventory ?? currentState.inventory, // Use updated inventory if provided
       isGameOver: aiResponse.isGameOver,
       lastOutcome: aiResponse.lastOutcome,

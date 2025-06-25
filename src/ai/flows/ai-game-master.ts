@@ -19,7 +19,7 @@ const CharacterSchema = z.object({
   affinity: z.number(),
   status: z.string(),
   description: z.string(),
-  avatar: z.string(),
+  avatar: z.string().describe("URL for a placeholder avatar, e.g., 'https://placehold.co/100x100.png'"),
 });
 
 const ItemSchema = z.object({
@@ -51,11 +51,7 @@ export type AiGameMasterInput = z.infer<typeof AiGameMasterInputSchema>;
 const AiGameMasterOutputSchema = z.object({
   newNarrative: z.string().describe("The next chapter of the story, describing the outcome of the player's choice and advancing the plot."),
   newChoices: z.array(z.string()).min(1).max(4).describe("A new set of 1 to 4 relevant choices for the player to make."),
-  updatedCharacters: z.array(z.object({
-    name: z.string(),
-    affinity: z.number().describe("The character's new affinity level (0-100) after the event."),
-    status: z.string().describe("The character's new status (e.g., 'Met', 'Friendly', 'Hostile').")
-  })).describe("The complete list of characters with their affinities and statuses updated based on the player's actions."),
+  updatedCharacters: z.array(CharacterSchema).describe("The complete, updated list of all characters. This can include new characters introduced in the narrative, or characters whose affinity or status has changed. Return the full list of all characters that should be in the game state."),
   updatedInventory: z.array(ItemSchema).optional().describe("The player's full inventory, potentially updated with new or removed items."),
   isGameOver: z.boolean().describe("Set to true if the player's choice leads to their death or a story-ending failure."),
   lastOutcome: z.string().describe("A brief summary of the immediate outcome of the player's choice, especially if it leads to game over."),
@@ -75,7 +71,7 @@ const prompt = ai.definePrompt({
 
   **Core Directives:**
   1.  **Advance the Narrative:** Based on the player's choice, write the next part of the story. The narrative should be descriptive, engaging, and faithful to the tone of Re:Zero.
-  2.  **Update Character Bonds:** The player's actions have consequences. Modify character affinities based on their choice. A positive interaction might increase affinity, while a negative one could decrease it. Update their status if a major relationship milestone is reached. Reflect these changes in the 'updatedCharacters' output.
+  2.  **Manage & Update Characters:** You are in full control of the character list. Based on the narrative, update affinities and statuses for existing characters. If a new character is introduced, add them to the list with a starting affinity, status, description, and a placeholder avatar URL ('https://placehold.co/100x100.png'). Return the complete, updated list of all characters in the 'updatedCharacters' field.
   3.  **Manage Encounters & Items:** Introduce challenges, puzzles, or combat encounters when narratively appropriate. You can grant or remove items from the player's inventory as part of the story.
   4.  **Determine Fate:** Decide if the player's choice leads to a "Game Over" state (i.e., death). If so, set 'isGameOver' to true.
   5.  **Provide New Choices:** Conclude your narrative by presenting 1-4 compelling and relevant choices for the player to make next.
