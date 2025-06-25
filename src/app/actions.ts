@@ -3,22 +3,13 @@
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { aiGameMaster } from '@/ai/flows/ai-game-master';
+import { fetchAndInjectLore } from '@/ai/flows/advanced-lorebook';
 import { returnByDeath } from '@/ai/flows/return-by-death';
 import { initialGameState } from '@/lib/initial-game-state';
 import type { GameState } from '@/lib/types';
 
-// Helper function to safely parse JSON
-function safeJsonParse<T>(jsonString: string, defaultValue: T): T {
-  try {
-    return JSON.parse(jsonString) as T;
-  } catch (e) {
-    console.error("Failed to parse JSON:", e);
-    return defaultValue;
-  }
-}
-
 export async function startNewGame(): Promise<GameState> {
-  const newGame = { ...initialGameState, checkpoint: { ...initialGameState, checkpoint: null } };
+  const newGame = { ...initialGameState, checkpoint: { ...initialGameState, checkpoint: null, memory: "" }, memory: "" };
   return newGame;
 }
 
@@ -27,27 +18,52 @@ export async function makeChoice(
   choice: string
 ): Promise<GameState> {
   try {
-    const gameStateString = JSON.stringify({
-      ...currentState,
-      choices: [], 
+    // 1. Get relevant lore for the current situation.
+    const loreContext = await fetchAndInjectLore({
+      gameSituation: `Previous Narrative: ${currentState.narrative}\nPlayer Chose: ${choice}`,
+      existingNarrativeContext: currentState.narrative,
     });
 
-    const lorebookString = JSON.stringify(currentState.skills.map(s => s.description).concat(currentState.inventory.map(i => i.description)));
-
+    // 2. Call the AI Game Master with the full game state and new context.
     const aiResponse = await aiGameMaster({
-      playerChoices: choice,
-      gameState: gameStateString,
-      lorebook: lorebookString,
+      playerChoice: choice,
+      currentNarrative: currentState.narrative,
+      characters: currentState.characters,
+      inventory: currentState.inventory,
+      skills: currentState.skills,
+      memory: currentState.memory,
+      injectedLore: loreContext.updatedNarrativeContext,
+    });
+    
+    // 3. Update the character list with new affinity and status, preserving descriptions and avatars.
+    const updatedCharacters = currentState.characters.map(currentChar => {
+        const aiCharUpdate = aiResponse.updatedCharacters.find(c => c.name === currentChar.name);
+        if (aiCharUpdate) {
+            return {
+                ...currentChar, // keep avatar, description
+                affinity: aiCharUpdate.affinity,
+                status: aiCharUpdate.status,
+            };
+        }
+        return currentChar;
     });
 
-    const updatedGameState = safeJsonParse(JSON.stringify(aiResponse.updatedGameState), currentState);
-    
-    return {
+    // 4. Update memory log.
+    const newMemory = `${currentState.memory}\n- Chose '${choice}', which resulted in: ${aiResponse.lastOutcome}`;
+
+    // 5. Construct the new game state.
+    const newState: GameState = {
       ...currentState,
-      ...updatedGameState,
-      narrative: aiResponse.narrative,
-      lastOutcome: aiResponse.narrative.slice(-200),
+      narrative: aiResponse.newNarrative,
+      choices: aiResponse.newChoices,
+      characters: updatedCharacters,
+      inventory: aiResponse.updatedInventory ?? currentState.inventory, // Use updated inventory if provided
+      isGameOver: aiResponse.isGameOver,
+      lastOutcome: aiResponse.lastOutcome,
+      memory: newMemory.slice(-2000), // Keep memory from getting too long
     };
+
+    return newState;
 
   } catch (error) {
     console.error('Error in makeChoice action:', error);
@@ -63,26 +79,30 @@ export async function triggerReturnByDeath(
   currentState: GameState
 ): Promise<GameState> {
   try {
+    // A checkpoint is a full GameState object. If it's null, use the initial state.
     const checkpoint = currentState.checkpoint || initialGameState;
 
     const aiResponse = await returnByDeath({
       scenarioDescription: checkpoint.narrative,
-      playerChoices: [],
+      playerChoices: [], // We don't have a good way to track choices within a loop yet
       outcome: currentState.lastOutcome || "Subaru met a terrible fate.",
     });
 
     return {
-      ...checkpoint,
+      ...checkpoint, // Rewind state to the checkpoint
       narrative: aiResponse.newScenario,
       choices: aiResponse.availableChoices,
       currentLoop: currentState.currentLoop + 1,
       isGameOver: false,
+      // Memory of the previous failed loop is retained by Subaru, but the world's state is reset.
+      memory: checkpoint.memory + `\n[Loop #${currentState.currentLoop} Failed: ${currentState.lastOutcome}]`,
     };
   } catch (error) {
     console.error('Error in triggerReturnByDeath action:', error);
     return {
         ...(currentState.checkpoint || initialGameState),
         currentLoop: currentState.currentLoop + 1,
+        isGameOver: false,
         narrative: (currentState.checkpoint?.narrative || initialGameState.narrative) + "\n\n[A painful rewind... The world stabilizes, but the path is unclear. You are back at your last checkpoint.]"
     }
   }
@@ -95,8 +115,15 @@ export async function saveGame(gameState: GameState): Promise<{ success: boolean
     }
     
     try {
-        await prisma.gameSave.create({
-            data: {
+        // Use upsert to create or update a save file. This simplifies to one save slot per user.
+        await prisma.gameSave.upsert({
+            where: {
+                userId: session.user.id,
+            },
+            update: {
+                state: gameState,
+            },
+            create: {
                 userId: session.user.id,
                 state: gameState,
             }
@@ -116,13 +143,10 @@ export async function loadMostRecentGame(): Promise<GameState | null> {
     }
 
     try {
-        const savedGame = await prisma.gameSave.findFirst({
+        const savedGame = await prisma.gameSave.findUnique({
             where: {
                 userId: session.user.id,
             },
-            orderBy: {
-                updatedAt: 'desc',
-            }
         });
 
         if (savedGame && savedGame.state) {

@@ -30,4 +30,5 @@ export interface GameState {
   isGameOver: boolean;
   checkpoint: GameState | null;
   lastOutcome: string;
+  memory: string;
 }

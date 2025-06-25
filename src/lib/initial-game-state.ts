@@ -49,4 +49,5 @@ export const initialGameState: GameState = {
   isGameOver: false,
   checkpoint: null,
   lastOutcome: "",
+  memory: "",
 };
