@@ -1,9 +1,11 @@
 'use client';
 
+import React, { useContext } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { initialGameState } from '@/lib/initial-game-state';
 import * as LucideIcons from 'lucide-react';
+import { GameContext } from '@/contexts/GameContext';
+import { Skeleton } from '../ui/skeleton';
 
 type IconName = keyof typeof LucideIcons;
 
@@ -14,7 +16,31 @@ const Icon = ({ name, className }: { name: IconName, className?: string }) => {
 };
 
 export default function Skills() {
-  const skills = initialGameState.skills; // Placeholder data
+  const context = useContext(GameContext);
+
+  if (!context) {
+    return null;
+  }
+
+  const { gameState } = context;
+
+  if (!gameState) {
+    return (
+        <div className="p-4 space-y-4">
+            {[...Array(2)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                    <Skeleton className="h-10 w-10 rounded-md" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-[150px]" />
+                        <Skeleton className="h-4 w-[200px]" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+  }
+
+  const skills = gameState.skills;
 
   return (
     <ScrollArea className="h-full">

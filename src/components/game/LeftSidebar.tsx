@@ -1,13 +1,13 @@
 'use client';
 
+import React, { useContext } from 'react';
 import { 
     FilePlus, 
     Save, 
     FolderOpen, 
     ClockRewind, 
     Flag, 
-    Settings,
-    Github,
+    LogIn,
     LogOut
 } from 'lucide-react';
 import { 
@@ -21,20 +21,43 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { GameContext } from '@/contexts/GameContext';
 
-// Dummy context values for now. This would be replaced by real context/state management.
-const handleStartNewGame = () => console.log("Start New Game");
-const handleReturnByDeath = () => console.log("Return by Death");
-const handleSetCheckpoint = () => console.log("Set Checkpoint");
 
 export default function LeftSidebar() {
     const { toast } = useToast();
+    const { data: session, status } = useSession();
+    const gameContext = useContext(GameContext);
+    
+    if (!gameContext) {
+        return null;
+    }
 
-    const showToast = (title: string) => {
-        toast({
-            title: "Feature Not Implemented",
-            description: `${title} functionality is not available in this demo.`,
-        });
+    const { 
+        handleStartNewGame, 
+        handleLoadGame, 
+        handleSaveGame,
+        handleSetCheckpoint,
+        handleReturnByDeath,
+     } = gameContext;
+
+    const isAuthenticated = status === 'authenticated';
+
+    const onSave = async () => {
+        if (!isAuthenticated) {
+            toast({ variant: 'destructive', title: "Not logged in", description: "You must be logged in to save." });
+            return;
+        }
+        await handleSaveGame();
+    }
+
+    const onLoad = async () => {
+        if (!isAuthenticated) {
+            toast({ variant: 'destructive', title: "Not logged in", description: "You must be logged in to load." });
+            return;
+        }
+        await handleLoadGame();
     }
 
   return (
@@ -42,12 +65,12 @@ export default function LeftSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarImage src="https://placehold.co/40x40.png" alt="Subaru Natsuki" data-ai-hint="anime character" />
-            <AvatarFallback>SN</AvatarFallback>
+            <AvatarImage src={session?.user?.image ?? `https://placehold.co/40x40.png`} alt={session?.user?.name ?? "User"} data-ai-hint="user avatar" />
+            <AvatarFallback>{session?.user?.name?.substring(0, 2).toUpperCase() ?? 'U'}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
-            <span className="font-semibold text-sidebar-foreground">Natsuki Subaru</span>
-            <span className="text-xs text-muted-foreground">Player</span>
+            <span className="font-semibold text-sidebar-foreground">{session?.user?.name ?? 'Guest'}</span>
+            <span className="text-xs text-muted-foreground">{isAuthenticated ? 'Player' : 'Not Logged In'}</span>
           </div>
         </div>
       </SidebarHeader>
@@ -55,19 +78,19 @@ export default function LeftSidebar() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => window.location.reload()} tooltip="Start a fresh adventure from the beginning.">
+            <SidebarMenuButton onClick={handleStartNewGame} tooltip="Start a fresh adventure from the beginning.">
               <FilePlus />
               <span>New Game</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => showToast('Save Game')} tooltip="Save your current progress. (Not Implemented)">
+            <SidebarMenuButton onClick={onSave} disabled={!isAuthenticated} tooltip={isAuthenticated ? "Save your current progress." : "Login to save."}>
               <Save />
               <span>Save Game</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => showToast('Load Game')} tooltip="Load a previously saved game. (Not Implemented)">
+            <SidebarMenuButton onClick={onLoad} disabled={!isAuthenticated} tooltip={isAuthenticated ? "Load your most recent game." : "Login to load."}>
               <FolderOpen />
               <span>Load Game</span>
             </SidebarMenuButton>
@@ -78,13 +101,13 @@ export default function LeftSidebar() {
 
         <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => showToast('Set Checkpoint')} tooltip="Set the current moment as your return point.">
+                <SidebarMenuButton onClick={handleSetCheckpoint} tooltip="Set the current moment as your return point.">
                     <Flag />
                     <span>Set Checkpoint</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => showToast('Return by Death')} className="text-destructive-foreground bg-destructive hover:bg-destructive/90" tooltip="Rewind time to your last checkpoint.">
+                <SidebarMenuButton onClick={handleReturnByDeath} className="text-destructive-foreground bg-destructive hover:bg-destructive/90" tooltip="Rewind time to your last checkpoint.">
                     <ClockRewind />
                     <span>Return by Death</span>
                 </SidebarMenuButton>
@@ -95,18 +118,21 @@ export default function LeftSidebar() {
       <SidebarFooter>
         <SidebarSeparator className="my-2"/>
         <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => showToast('Settings')} tooltip="Adjust game settings. (Not Implemented)">
-                    <Settings/>
-                    <span>Settings</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => showToast('Logout')} tooltip="Logout of your account. (Not Implemented)">
-                    <LogOut />
-                    <span>Logout</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+            {isAuthenticated ? (
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => signOut()} tooltip="Logout of your account.">
+                        <LogOut />
+                        <span>Logout</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ) : (
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={() => signIn('discord')} tooltip="Login with Discord.">
+                        <LogIn />
+                        <span>Login</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            )}
         </SidebarMenu>
       </SidebarFooter>
     </>

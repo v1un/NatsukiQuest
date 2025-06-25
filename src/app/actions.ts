@@ -1,5 +1,7 @@
 'use server';
 
+import { auth } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 import { aiGameMaster } from '@/ai/flows/ai-game-master';
 import { returnByDeath } from '@/ai/flows/return-by-death';
 import { initialGameState } from '@/lib/initial-game-state';
@@ -16,8 +18,6 @@ function safeJsonParse<T>(jsonString: string, defaultValue: T): T {
 }
 
 export async function startNewGame(): Promise<GameState> {
-  // The initial game state is hard-coded for a lore-accurate start.
-  // We can set the first checkpoint to be the very beginning.
   const newGame = { ...initialGameState, checkpoint: { ...initialGameState, checkpoint: null } };
   return newGame;
 }
@@ -29,7 +29,7 @@ export async function makeChoice(
   try {
     const gameStateString = JSON.stringify({
       ...currentState,
-      choices: [], // Clear choices while AI is thinking
+      choices: [], 
     });
 
     const lorebookString = JSON.stringify(currentState.skills.map(s => s.description).concat(currentState.inventory.map(i => i.description)));
@@ -40,13 +40,13 @@ export async function makeChoice(
       lorebook: lorebookString,
     });
 
-    const updatedGameState = safeJsonParse(aiResponse.updatedGameState, currentState);
+    const updatedGameState = safeJsonParse(JSON.stringify(aiResponse.updatedGameState), currentState);
     
     return {
       ...currentState,
       ...updatedGameState,
       narrative: aiResponse.narrative,
-      lastOutcome: aiResponse.narrative.slice(-200), // Store the last few sentences as the outcome
+      lastOutcome: aiResponse.narrative.slice(-200),
     };
 
   } catch (error) {
@@ -67,7 +67,7 @@ export async function triggerReturnByDeath(
 
     const aiResponse = await returnByDeath({
       scenarioDescription: checkpoint.narrative,
-      playerChoices: [], // In a more complex system, we'd track choices made in the loop
+      playerChoices: [],
       outcome: currentState.lastOutcome || "Subaru met a terrible fate.",
     });
 
@@ -80,11 +80,58 @@ export async function triggerReturnByDeath(
     };
   } catch (error) {
     console.error('Error in triggerReturnByDeath action:', error);
-    // Fallback to the last checkpoint if AI fails
     return {
         ...(currentState.checkpoint || initialGameState),
         currentLoop: currentState.currentLoop + 1,
         narrative: (currentState.checkpoint?.narrative || initialGameState.narrative) + "\n\n[A painful rewind... The world stabilizes, but the path is unclear. You are back at your last checkpoint.]"
     }
   }
+}
+
+export async function saveGame(gameState: GameState): Promise<{ success: boolean; message: string }> {
+    const session = await auth();
+    if (!session?.user?.id) {
+        return { success: false, message: 'You must be logged in to save the game.' };
+    }
+    
+    try {
+        await prisma.gameSave.create({
+            data: {
+                userId: session.user.id,
+                state: gameState,
+            }
+        });
+        return { success: true, message: 'Game saved successfully!' };
+    } catch (error) {
+        console.error('Error saving game:', error);
+        return { success: false, message: 'Failed to save the game.' };
+    }
+}
+
+export async function loadMostRecentGame(): Promise<GameState | null> {
+    const session = await auth();
+    if (!session?.user?.id) {
+        console.log("No session found, cannot load game.");
+        return null;
+    }
+
+    try {
+        const savedGame = await prisma.gameSave.findFirst({
+            where: {
+                userId: session.user.id,
+            },
+            orderBy: {
+                updatedAt: 'desc',
+            }
+        });
+
+        if (savedGame && savedGame.state) {
+            // Prisma returns state as a JsonValue, we need to cast it.
+            return savedGame.state as unknown as GameState;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error loading game:', error);
+        return null;
+    }
 }

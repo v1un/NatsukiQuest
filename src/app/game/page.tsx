@@ -1,9 +1,9 @@
-import GameClient from "@/components/game/GameClient";
+import GameScreen from "@/components/game/GameScreen";
 
 export default function GamePage() {
   return (
     <div className="h-full">
-      <GameClient />
+      <GameScreen />
     </div>
   );
 }

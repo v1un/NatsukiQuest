@@ -1,14 +1,40 @@
 'use client';
 
+import React, { useContext } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { initialGameState } from '@/lib/initial-game-state'; // Using initial state as placeholder
+import { GameContext } from '@/contexts/GameContext';
+import { Skeleton } from '../ui/skeleton';
 
-// This component would ideally receive gameState as a prop
+
 export default function CharacterBonds() {
-  const characters = initialGameState.characters; // Placeholder data
+  const context = useContext(GameContext);
+
+  if (!context) {
+    return null; // Or some loading state
+  }
+
+  const { gameState } = context;
+
+  if (!gameState) {
+    return (
+      <div className="p-4 space-y-4">
+        {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-[150px]" />
+                    <Skeleton className="h-4 w-[100px]" />
+                </div>
+            </div>
+        ))}
+      </div>
+    );
+  }
+
+  const characters = gameState.characters;
 
   return (
     <ScrollArea className="h-full">

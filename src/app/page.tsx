@@ -1,8 +1,14 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Dices } from 'lucide-react';
+import { useSession, signIn } from 'next-auth/react';
+import { Loader } from 'lucide-react';
 
 export default function Home() {
+  const { data: session, status } = useSession();
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       <div 
@@ -23,11 +29,27 @@ export default function Home() {
         <p className="max-w-2xl text-muted-foreground mb-10">
           Your choices shape the story. Your failures are not the end. Can you guide Subaru to a new fate? Powered by AI, every journey is unique.
         </p>
-        <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
-          <Link href="/game">
-            Begin Your Journey
-          </Link>
-        </Button>
+
+        {status === 'loading' && (
+            <Button size="lg" disabled>
+                <Loader className="mr-2 h-4 w-4 animate-spin" />
+                Please wait
+            </Button>
+        )}
+
+        {status === 'unauthenticated' && (
+            <Button onClick={() => signIn('discord')} size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                Login with Discord to Begin
+            </Button>
+        )}
+
+        {status === 'authenticated' && (
+            <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <Link href="/game">
+                    Begin Your Journey
+                </Link>
+            </Button>
+        )}
       </div>
     </div>
   );
