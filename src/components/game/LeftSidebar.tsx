@@ -5,7 +5,7 @@ import {
     FilePlus, 
     Save, 
     FolderOpen, 
-    ClockRewind, 
+    RotateCcw, 
     Flag, 
     LogIn,
     LogOut
@@ -108,7 +108,7 @@ export default function LeftSidebar() {
             </SidebarMenuItem>
             <SidebarMenuItem>
                 <SidebarMenuButton onClick={handleReturnByDeath} className="text-destructive-foreground bg-destructive hover:bg-destructive/90" tooltip="Rewind time to your last checkpoint.">
-                    <ClockRewind />
+                    <RotateCcw />
                     <span>Return by Death</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>

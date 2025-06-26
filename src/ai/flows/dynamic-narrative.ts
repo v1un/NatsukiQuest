@@ -16,7 +16,7 @@ const DynamicNarrativeInputSchema = z.object({
   playerChoices: z.string().describe('The choices made by the player.'),
   currentGameState: z.string().describe('The current state of the game, including location, time, and character relationships.'),
   relevantLore: z.string().describe('Relevant lore information based on the current game situation.'),
-  subaruAbilities: z.string().describe('Subaru	's unique abilities and their current status.'),
+  subaruAbilities: z.string().describe('Subaru\'s unique abilities and their current status.'),
 });
 export type DynamicNarrativeInput = z.infer<typeof DynamicNarrativeInputSchema>;
 
@@ -56,7 +56,7 @@ const dynamicNarrativeFlow = ai.defineFlow(
     inputSchema: DynamicNarrativeInputSchema,
     outputSchema: DynamicNarrativeOutputSchema,
   },
-  async input => {
+  async (input: DynamicNarrativeInput) => {
     const {output} = await prompt(input);
     return output!;
   }

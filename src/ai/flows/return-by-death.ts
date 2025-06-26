@@ -23,7 +23,7 @@ const ReturnByDeathInputSchema = z.object({
 export type ReturnByDeathInput = z.infer<typeof ReturnByDeathInputSchema>;
 
 const ReturnByDeathOutputSchema = z.object({
-  newScenario: z.string().describe('The new scenario based on the player\' + "'s previous choices and outcome, incorporating the 'Return by Death' ability."),
+  newScenario: z.string().describe("The new scenario based on the player's previous choices and outcome, incorporating the 'Return by Death' ability."),
   availableChoices: z.array(z.string()).describe('The available choices for the player in the new scenario.'),
 });
 export type ReturnByDeathOutput = z.infer<typeof ReturnByDeathOutputSchema>;
