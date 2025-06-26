@@ -56,6 +56,76 @@ model User {
   accounts      Account[]
   sessions      Session[]
   gameSaves     GameSave[]
+  loreEntries   LoreEntry[]
+  quests        Quest[]
+  reputations   Reputation[]
+}
+
+// Lorebook system
+model LoreEntry {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  category    String
+  tags        String[]
+  isDiscovered Boolean @default(false)
+  discoveredAt DateTime?
+  location    String?
+  characters  String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+}
+
+// Quest system
+model Quest {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  category    QuestType   @default(MAIN)
+  status      QuestStatus @default(ACTIVE)
+  objectives  Json        // Array of objectives with completion status
+  rewards     Json?       // Items, experience, etc.
+  startedAt   DateTime    @default(now())
+  completedAt DateTime?
+  location    String?
+  npcsInvolved String[]
+  prerequisites String[]  // Quest IDs that must be completed first
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+}
+
+// Reputation and faction system
+model Reputation {
+  id         String   @id @default(cuid())
+  faction    String   // Faction/group name
+  level      Int      @default(0) // -100 to 100 scale
+  title      String?  // Current title with faction
+  history    Json     // Array of reputation changes with reasons
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+
+  @@unique([userId, faction])
+}
+
+enum QuestType {
+  MAIN
+  SIDE
+  ROMANCE
+  FACTION
+  EXPLORATION
+}
+
+enum QuestStatus {
+  ACTIVE
+  COMPLETED
+  FAILED
+  PAUSED
 }
 
 model VerificationToken {

@@ -50,4 +50,74 @@ export const initialGameState: GameState = {
   checkpoint: null,
   lastOutcome: "",
   memory: "",
+  // New system initializations
+  discoveredLore: [],
+  activeQuests: [
+    {
+      id: "quest_main_1",
+      title: "Find Your Place in This New World",
+      description: "You've been transported to a fantasy world. Figure out how to survive and find your purpose.",
+      category: "MAIN",
+      status: "ACTIVE",
+      objectives: [
+        {
+          id: "obj_1",
+          description: "Meet the locals and understand the world",
+          isCompleted: false,
+          progress: 0,
+          maxProgress: 3
+        },
+        {
+          id: "obj_2", 
+          description: "Find a place to stay for the night",
+          isCompleted: false
+        }
+      ],
+      rewards: [
+        {
+          type: "SKILL",
+          skillId: "basic_survival",
+          amount: 1
+        }
+      ],
+      startedAt: new Date(),
+      location: "Lugunica Capital",
+      npcsInvolved: ["Emilia"],
+      prerequisites: []
+    }
+  ],
+  completedQuests: [],
+  reputations: [
+    {
+      id: "rep_lugunica",
+      faction: "Kingdom of Lugunica",
+      level: 0,
+      history: []
+    },
+    {
+      id: "rep_emilia_camp",
+      faction: "Emilia Camp",
+      level: 5,
+      title: "Curious Stranger",
+      history: [
+        {
+          amount: 5,
+          reason: "Initial meeting with Emilia",
+          timestamp: new Date(),
+          location: "Lugunica Capital"
+        }
+      ]
+    }
+  ],
+  currentLocation: "Lugunica Capital - Market District",
+  environmentalDetails: [
+    {
+      id: "env_1",
+      location: "Lugunica Capital - Market District",
+      description: "The bustling market streets are filled with exotic goods and strange creatures. Dragon-drawn carriages navigate between pedestrians, and the air is thick with foreign spices and magical energy.",
+      interactionType: "EXAMINE",
+      isDiscovered: false
+    }
+  ],
+  relationshipConflicts: []
 };

@@ -12,6 +12,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { gameTools } from '@/ai/tools';
 
 // Schemas for structured data matching lib/types.ts
 const CharacterSchema = z.object({
@@ -38,6 +39,7 @@ const SkillSchema = z.object({
 
 
 const AiGameMasterInputSchema = z.object({
+  userId: z.string().describe("The user ID for database operations."),
   playerChoice: z.string().describe("The choice the player just made."),
   currentNarrative: z.string().describe("The story narrative so far."),
   characters: z.array(CharacterSchema).describe("The current state of all characters."),
@@ -67,17 +69,31 @@ const prompt = ai.definePrompt({
   name: 'aiGameMasterPrompt',
   input: {schema: AiGameMasterInputSchema},
   output: {schema: AiGameMasterOutputSchema},
-  prompt: `You are the ultimate Game Master for "Natsuki Quest: A Re:Zero Adventure". Your role is to be a master storyteller, creating a dynamic, engaging, and lore-accurate narrative that responds to the player's choices. You have full control over the game state.
+  prompt: `You are the ultimate Game Master for "Natsuki Quest: A Re:Zero Adventure". Your role is to be a master storyteller, creating a dynamic, engaging, and lore-accurate narrative that responds to the player's choices. You have full control over the game state and can ACTIVELY MODIFY THE GAME WORLD.
+
+  **IMPORTANT: You now have TOOLS to directly affect the game state!**
+  
+  **Available Tools:**
+  1. **updatePlayerInventory** - Add or remove items from the player's inventory (use positive quantity to add, negative to remove)
+  2. **getPlayerStats** - Check current player health, skills, and attributes
+  3. **updatePlayerStats** - Modify player health, add new skills, or change attributes
+  4. **performSkillCheck** - Execute dice rolls for skill checks (lockpicking, persuasion, combat, etc.)
+  5. **updateWorldState** - Set story flags, quest progress, or unlock new areas
 
   **Core Directives:**
   1.  **Advance the Narrative:** Based on the player's choice, write the next part of the story. The narrative should be descriptive, engaging, and faithful to the tone of Re:Zero.
-  2.  **Manage & Update Characters:** You are in full control of the character list. Based on the narrative, update affinities and statuses for existing characters. If a new character is introduced, add them to the list with a starting affinity, status, description, and a placeholder avatar URL ('https://placehold.co/100x100.png'). Return the complete, updated list of all characters in the 'updatedCharacters' field.
-  3.  **Manage Encounters & Items:** Introduce challenges, puzzles, or combat encounters when narratively appropriate. You can grant or remove items from the player's inventory as part of the story.
+  2.  **Use Tools Actively:** When the story requires it, USE THE TOOLS to make real changes:
+      - If player finds an item, use updatePlayerInventory to add it
+      - If player attempts a skill check, use performSkillCheck to determine success
+      - If player takes damage or heals, use updatePlayerStats to modify health
+      - If story progress occurs, use updateWorldState to track it
+  3.  **Manage & Update Characters:** You are in full control of the character list. Based on the narrative, update affinities and statuses for existing characters.
   4.  **Determine Fate:** Decide if the player's choice leads to a "Game Over" state (i.e., death). If so, set 'isGameOver' to true.
   5.  **Provide New Choices:** Conclude your narrative by presenting 1-4 compelling and relevant choices for the player to make next.
   6.  **Maintain Continuity:** Use the 'memory' and 'injectedLore' to ensure the story is consistent and rich with detail.
 
   **Game Context:**
+  - **User ID:** {{{userId}}} (use this for all tool calls)
   - **Previous Narrative:** {{{currentNarrative}}}
   - **Player's Choice:** "{{{playerChoice}}}"
   - **Memory (Past Events):** {{{memory}}}
@@ -88,7 +104,13 @@ const prompt = ai.definePrompt({
   - **Inventory:** {{json inventory}}
   - **Skills:** {{json skills}}
 
-  Now, based on the player's choice, generate the next state of the game.
+  **Example Tool Usage:**
+  - Player says "I search the chest" → Use performSkillCheck for perception, then updatePlayerInventory to add found items
+  - Player says "I try to pick the lock" → Use performSkillCheck for lockpicking skill
+  - Player takes damage in combat → Use updatePlayerStats to reduce health
+  - Player completes a quest → Use updateWorldState to mark quest as complete
+
+  Now, based on the player's choice, generate the next state of the game. Use tools when appropriate to make real changes to the game world!
   `,
 });
 
@@ -99,7 +121,10 @@ const aiGameMasterFlow = ai.defineFlow(
     outputSchema: AiGameMasterOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt(input, {
+      tools: gameTools,
+      maxTurns: 10, // Allow multiple tool calls per turn
+    });
     return output!;
   }
 );

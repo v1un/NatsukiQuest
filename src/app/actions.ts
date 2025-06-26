@@ -18,6 +18,12 @@ export async function makeChoice(
   choice: string
 ): Promise<GameState> {
   try {
+    // Get the authenticated user session for database operations
+    const session = await auth();
+    if (!session?.user?.id) {
+      throw new Error('You must be logged in to make choices');
+    }
+
     // 1. Get relevant lore for the current situation.
     const loreContext = await fetchAndInjectLore({
       gameSituation: `Previous Narrative: ${currentState.narrative}\nPlayer Chose: ${choice}`,
@@ -26,6 +32,7 @@ export async function makeChoice(
 
     // 2. Call the AI Game Master with the full game state and new context.
     const aiResponse = await aiGameMaster({
+      userId: session.user.id, // Pass the user ID for tool operations
       playerChoice: choice,
       currentNarrative: currentState.narrative,
       characters: currentState.characters,
@@ -35,16 +42,31 @@ export async function makeChoice(
       injectedLore: loreContext.updatedNarrativeContext,
     });
     
-    // 3. Update memory log.
-    const newMemory = `${currentState.memory}\n- Chose '${choice}', which resulted in: ${aiResponse.lastOutcome}`;
+    // 3. Retrieve the potentially updated game state from the database
+    //    The AI tools may have modified inventory, stats, or world state
+    let updatedGameState = currentState;
+    try {
+      const savedGame = await prisma.gameSave.findUnique({
+        where: { userId: session.user.id },
+      });
+      if (savedGame && savedGame.state) {
+        updatedGameState = savedGame.state as unknown as GameState;
+      }
+    } catch (dbError) {
+      console.warn('Could not retrieve updated game state from database:', dbError);
+      // Continue with current state if database read fails
+    }
 
-    // 4. Construct the new game state. The AI now returns the full, updated character list.
+    // 4. Update memory log.
+    const newMemory = `${updatedGameState.memory}\n- Chose '${choice}', which resulted in: ${aiResponse.lastOutcome}`;
+
+    // 5. Construct the new game state, merging AI responses with database updates.
     const newState: GameState = {
-      ...currentState,
+      ...updatedGameState, // Use the database state as base (includes tool modifications)
       narrative: aiResponse.newNarrative,
       choices: aiResponse.newChoices,
       characters: aiResponse.updatedCharacters, // Directly use the AI's updated list
-      inventory: aiResponse.updatedInventory ?? currentState.inventory, // Use updated inventory if provided
+      inventory: aiResponse.updatedInventory ?? updatedGameState.inventory, // Use updated inventory if provided
       isGameOver: aiResponse.isGameOver,
       lastOutcome: aiResponse.lastOutcome,
       memory: newMemory.slice(-2000), // Keep memory from getting too long
@@ -54,6 +76,16 @@ export async function makeChoice(
 
   } catch (error) {
     console.error('Error in makeChoice action:', error);
+    
+    // Handle authentication errors specifically
+    if (error instanceof Error && error.message.includes('logged in')) {
+      return {
+        ...currentState,
+        narrative: currentState.narrative + "\n\n[You must be logged in to continue your adventure. Please sign in and try again.]",
+        choices: ["Sign In"],
+      };
+    }
+    
     return {
       ...currentState,
       narrative: currentState.narrative + "\n\n[An error occurred. The threads of fate are tangled. Please try a different choice or start a new loop.]",
@@ -108,11 +140,11 @@ export async function saveGame(gameState: GameState): Promise<{ success: boolean
                 userId: session.user.id,
             },
             update: {
-                state: gameState,
+                state: gameState as any,
             },
             create: {
                 userId: session.user.id,
-                state: gameState,
+                state: gameState as any,
             }
         });
         return { success: true, message: 'Game saved successfully!' };
