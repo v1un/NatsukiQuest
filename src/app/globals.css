@@ -1,80 +1,133 @@
+/* Import Japanese-inspired fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&family=Noto+Serif+JP:wght@200..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  line-height: 1.6;
+  letter-spacing: -0.011em;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 275 100% 25%;
-    --primary-foreground: 275 100% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 288 85% 54%;
-    --accent-foreground: 288 85% 98%;
-    --destructive: 0 84.2% 60.2%;
+    /* Re:Zero Light Theme - Elegant and Royal */
+    --background: 240 15% 97%;
+    --foreground: 240 15% 8%;
+    --card: 240 20% 99%;
+    --card-foreground: 240 15% 8%;
+    --popover: 240 20% 99%;
+    --popover-foreground: 240 15% 8%;
+    
+    /* Royal Purple - Reminiscent of Emilia's royal nature */
+    --primary: 270 85% 35%;
+    --primary-foreground: 270 85% 98%;
+    
+    /* Soft secondary tones */
+    --secondary: 240 15% 92%;
+    --secondary-foreground: 240 15% 15%;
+    --muted: 240 15% 94%;
+    --muted-foreground: 240 10% 40%;
+    
+    /* Magical Accent - Subaru's determination */
+    --accent: 280 75% 55%;
+    --accent-foreground: 280 75% 98%;
+    
+    /* Return by Death - Crimson theme */
+    --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 275 100% 25%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 275 100% 75%;
-    --sidebar-primary-foreground: 275 100% 15%;
-    --sidebar-accent: 288 85% 60%;
-    --sidebar-accent-foreground: 288 85% 10%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 288 85% 54%;
+    
+    /* Refined borders and inputs */
+    --border: 240 15% 88%;
+    --input: 240 15% 90%;
+    --ring: 270 85% 35%;
+    
+    /* Character-themed chart colors */
+    --chart-1: 280 75% 55%; /* Subaru - Purple */
+    --chart-2: 200 85% 65%; /* Emilia - Ice Blue */
+    --chart-3: 340 70% 60%; /* Rem - Blue tinted */
+    --chart-4: 25 85% 65%;  /* Ram - Pink/Coral */
+    --chart-5: 45 80% 60%;  /* Beatrice - Golden */
+    
+    --radius: 0.75rem;
+    
+    /* Enhanced sidebar theming */
+    --sidebar-background: 240 20% 95%;
+    --sidebar-foreground: 240 15% 12%;
+    --sidebar-primary: 270 85% 35%;
+    --sidebar-primary-foreground: 270 85% 98%;
+    --sidebar-accent: 280 75% 55%;
+    --sidebar-accent-foreground: 280 75% 98%;
+    --sidebar-border: 240 15% 85%;
+    --sidebar-ring: 270 85% 35%;
+    
+    /* New Re:Zero specific colors */
+    --rezero-mansion: 240 25% 96%;
+    --rezero-royal: 260 80% 40%;
+    --rezero-magic: 280 90% 60%;
+    --rezero-danger: 0 80% 50%;
+    --rezero-forest: 120 40% 35%;
+    --rezero-night: 240 30% 15%;
   }
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 275 100% 75%;
-    --primary-foreground: 275 100% 15%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 288 85% 60%;
-    --accent-foreground: 288 85% 10%;
-    --destructive: 0 62.8% 30.6%;
+    /* Re:Zero Dark Theme - Mysterious and Atmospheric */
+    --background: 240 25% 6%;
+    --foreground: 240 15% 92%;
+    --card: 240 25% 8%;
+    --card-foreground: 240 15% 92%;
+    --popover: 240 25% 8%;
+    --popover-foreground: 240 15% 92%;
+    
+    /* Mystical Purple - Enhanced for dark mode */
+    --primary: 270 85% 65%;
+    --primary-foreground: 270 85% 5%;
+    
+    /* Dark secondary tones */
+    --secondary: 240 20% 12%;
+    --secondary-foreground: 240 15% 88%;
+    --muted: 240 20% 10%;
+    --muted-foreground: 240 15% 65%;
+    
+    /* Ethereal Accent - Glowing effect */
+    --accent: 280 85% 70%;
+    --accent-foreground: 280 85% 5%;
+    
+    /* Death theme - More intense in dark mode */
+    --destructive: 0 85% 65%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 288 85% 54%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 275 100% 75%;
-    --sidebar-primary-foreground: 275 100% 15%;
-    --sidebar-accent: 288 85% 60%;
-    --sidebar-accent-foreground: 288 85% 10%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 288 85% 54%;
+    
+    /* Subtle borders for dark theme */
+    --border: 240 20% 15%;
+    --input: 240 20% 12%;
+    --ring: 270 85% 65%;
+    
+    /* Dark mode character colors - more vibrant */
+    --chart-1: 280 85% 70%; /* Subaru - Glowing Purple */
+    --chart-2: 200 90% 75%; /* Emilia - Bright Ice Blue */
+    --chart-3: 240 80% 70%; /* Rem - Soft Blue */
+    --chart-4: 340 75% 70%; /* Ram - Rose Pink */
+    --chart-5: 45 85% 70%;  /* Beatrice - Warm Gold */
+    
+    /* Dark sidebar with better contrast */
+    --sidebar-background: 240 25% 4%;
+    --sidebar-foreground: 240 15% 90%;
+    --sidebar-primary: 270 85% 65%;
+    --sidebar-primary-foreground: 270 85% 5%;
+    --sidebar-accent: 280 85% 70%;
+    --sidebar-accent-foreground: 280 85% 5%;
+    --sidebar-border: 240 20% 12%;
+    --sidebar-ring: 270 85% 65%;
+    
+    /* Dark mode Re:Zero specific colors */
+    --rezero-mansion: 240 30% 8%;
+    --rezero-royal: 260 90% 65%;
+    --rezero-magic: 280 95% 75%;
+    --rezero-danger: 0 90% 65%;
+    --rezero-forest: 120 50% 25%;
+    --rezero-night: 240 35% 3%;
   }
 }
 
@@ -84,6 +137,50 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  /* Visual Novel Text Styling */
+  .dialogue-text {
+    @apply font-dialogue text-lg leading-relaxed;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .character-name {
+    @apply font-headline font-bold text-primary;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .narrative-text {
+    @apply font-body text-base leading-relaxed text-foreground/90;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  }
+  
+  .choice-button {
+    @apply font-ui font-medium transition-all duration-200;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .choice-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Magical text effects */
+  .magic-text {
+    background: linear-gradient(45deg, hsl(var(--rezero-magic)), hsl(var(--primary)));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-size: 200% 200%;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+  
+  .danger-text {
+    @apply text-destructive font-bold;
+    text-shadow: 0 0 8px hsl(var(--destructive) / 0.3);
+    animation: pulse-danger 1.5s ease-in-out infinite;
   }
 }
 
@@ -100,8 +197,92 @@ body {
       filter: invert(0) brightness(1);
     }
   }
+  
+  @keyframes shimmer {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  
+  @keyframes pulse-danger {
+    0%, 100% {
+      opacity: 1;
+      text-shadow: 0 0 8px hsl(var(--destructive) / 0.3);
+    }
+    50% {
+      opacity: 0.8;
+      text-shadow: 0 0 12px hsl(var(--destructive) / 0.5);
+    }
+  }
+  
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 
   .rewinding {
     animation: rewind-effect 0.8s ease-in-out;
+  }
+  
+  .fade-in-up {
+    animation: fade-in-up 0.5s ease-out;
+  }
+  
+  .slide-in-right {
+    animation: slide-in-right 0.4s ease-out;
+  }
+  
+  /* Prose improvements for narrative text */
+  .prose-game {
+    @apply max-w-none text-foreground;
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+  
+  .prose-game p {
+    @apply narrative-text mb-4;
+  }
+  
+  .prose-game strong {
+    @apply character-name;
+  }
+  
+  .prose-game em {
+    @apply italic text-muted-foreground;
+  }
+  
+  /* Line clamping utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }

@@ -10,9 +10,13 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['Literata', 'serif'],
-        headline: ['Literata', 'serif'],
-        code: ['monospace'],
+        sans: ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],
+        serif: ['Noto Serif JP', 'Georgia', 'serif'],
+        body: ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],
+        headline: ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],
+        dialogue: ['Noto Serif JP', 'Georgia', 'serif'],
+        ui: ['Inter', 'system-ui', 'sans-serif'],
+        code: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',
@@ -65,6 +69,15 @@ export default {
           border: 'hsl(var(--sidebar-border))',
           ring: 'hsl(var(--sidebar-ring))',
         },
+        // Re:Zero themed colors
+        rezero: {
+          mansion: 'hsl(var(--rezero-mansion))',
+          royal: 'hsl(var(--rezero-royal))',
+          magic: 'hsl(var(--rezero-magic))',
+          danger: 'hsl(var(--rezero-danger))',
+          forest: 'hsl(var(--rezero-forest))',
+          night: 'hsl(var(--rezero-night))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -92,6 +105,22 @@ export default {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'fade-in': 'fadeIn 0.5s ease-in-out',
+        'slide-up': 'slideUp 0.3s ease-out',
+        'pulse-slow': 'pulse 3s ease-in-out infinite',
+      },
+      screens: {
+        'xs': '475px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
       },
     },
   },

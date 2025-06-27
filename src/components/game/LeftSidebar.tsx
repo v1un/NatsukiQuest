@@ -123,105 +123,185 @@ export default function LeftSidebar() {
 
   return (
     <>
-      <SidebarHeader>
+      <SidebarHeader className="p-4 border-b border-sidebar-border/50">
         <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={session?.user?.image ?? `https://placehold.co/40x40.png`} alt={session?.user?.name ?? "User"} data-ai-hint="user avatar" />
-            <AvatarFallback>{session?.user?.name?.substring(0, 2).toUpperCase() ?? 'U'}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="font-semibold text-sidebar-foreground">{session?.user?.name ?? 'Guest'}</span>
-            <span className="text-xs text-muted-foreground">{isAuthenticated ? 'Player' : 'Not Logged In'}</span>
+          <div className="relative">
+            <Avatar className="ring-2 ring-sidebar-border/30">
+              <AvatarImage 
+                src={session?.user?.image ?? `https://placehold.co/40x40.png`} 
+                alt={session?.user?.name ?? "User"} 
+                data-ai-hint="user avatar"
+              />
+              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-bold">
+                {session?.user?.name?.substring(0, 2).toUpperCase() ?? 'U'}
+              </AvatarFallback>
+            </Avatar>
+            {isAuthenticated && (
+              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-sidebar-background rounded-full"></div>
+            )}
+          </div>
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="font-semibold text-sidebar-foreground truncate">
+              {session?.user?.name ?? 'Guest'}
+            </span>
+            <span className={`text-xs font-medium ${isAuthenticated ? 'text-green-400' : 'text-red-400'}`}>
+              {isAuthenticated ? 'Connected' : 'Not Logged In'}
+            </span>
           </div>
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="p-2">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleStartNewGame} tooltip="Start a fresh adventure from the beginning.">
-              <FilePlus />
-              <span>New Game</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={onSave} disabled={!isAuthenticated} tooltip={isAuthenticated ? "Save your current progress." : "Login to save."}>
-              <Save />
-              <span>Save Game</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={onLoad} disabled={!isAuthenticated} tooltip={isAuthenticated ? "Load your most recent game." : "Login to load."}>
-              <FolderOpen />
-              <span>Load Game</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarContent className="p-3 space-y-4">
+        {/* Game Management Section */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider px-2">
+            Game Management
+          </h3>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={handleStartNewGame} 
+                tooltip="Start a fresh adventure from the beginning."
+                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors"
+              >
+                <FilePlus className="w-4 h-4" />
+                <span>New Game</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={onSave} 
+                disabled={!isAuthenticated} 
+                tooltip={isAuthenticated ? "Save your current progress." : "Login to save."}
+                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save Game</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={onLoad} 
+                disabled={!isAuthenticated} 
+                tooltip={isAuthenticated ? "Load your most recent game." : "Login to load."}
+                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors disabled:opacity-50"
+              >
+                <FolderOpen className="w-4 h-4" />
+                <span>Load Game</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
 
-        <SidebarSeparator className="my-4" />
+        <SidebarSeparator className="bg-sidebar-border/30" />
 
-        <SidebarMenu>
+        {/* Exploration Section */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider px-2">
+            Exploration
+          </h3>
+          <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setIsLorebookOpen(true)} tooltip="View discovered lore and world knowledge [L]">
-                    <BookOpen />
-                    <span>Lorebook</span>
-                </SidebarMenuButton>
+              <SidebarMenuButton 
+                onClick={() => setIsLorebookOpen(true)} 
+                tooltip="View discovered lore and world knowledge [L]"
+                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Lorebook</span>
+                <span className="text-xs opacity-60 ml-auto">L</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setIsQuestJournalOpen(true)} tooltip="Track active and completed quests [Q]">
-                    <Scroll />
-                    <span>Quest Journal</span>
-                </SidebarMenuButton>
+              <SidebarMenuButton 
+                onClick={() => setIsQuestJournalOpen(true)} 
+                tooltip="Track active and completed quests [Q]"
+                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors"
+              >
+                <Scroll className="w-4 h-4" />
+                <span>Quest Journal</span>
+                <span className="text-xs opacity-60 ml-auto">Q</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton 
-                    onClick={() => handleGenerateQuest('AUTO')} 
-                    disabled={!isAuthenticated}
-                    tooltip={isAuthenticated ? "Generate a new side quest based on your current situation" : "Login to generate quests"}
-                >
-                    <Compass />
-                    <span>Generate Quest</span>
-                </SidebarMenuButton>
+              <SidebarMenuButton 
+                onClick={() => handleGenerateQuest('AUTO')} 
+                disabled={!isAuthenticated}
+                tooltip={isAuthenticated ? "Generate a new side quest based on your current situation" : "Login to generate quests"}
+                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors disabled:opacity-50"
+              >
+                <Compass className="w-4 h-4" />
+                <span>Generate Quest</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
-        </SidebarMenu>
+          </SidebarMenu>
+        </div>
 
-        <SidebarSeparator className="my-4" />
+        <SidebarSeparator className="bg-sidebar-border/30" />
 
-        <SidebarMenu>
+        {/* Time Magic Section */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider px-2">
+            Time Magic
+          </h3>
+          <SidebarMenu>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleSetCheckpoint} tooltip="Set the current moment as your return point.">
-                    <Flag />
-                    <span>Set Checkpoint</span>
-                </SidebarMenuButton>
+              <SidebarMenuButton 
+                onClick={handleSetCheckpoint} 
+                tooltip="Set the current moment as your return point."
+                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors"
+              >
+                <Flag className="w-4 h-4" />
+                <span>Set Checkpoint</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleReturnByDeath} className="text-destructive-foreground bg-destructive hover:bg-destructive/90" tooltip="Rewind time to your last checkpoint.">
-                    <RotateCcw />
-                    <span>Return by Death</span>
-                </SidebarMenuButton>
+              <SidebarMenuButton 
+                onClick={handleReturnByDeath} 
+                className="text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors group"
+                tooltip="Rewind time to your last checkpoint."
+              >
+                <RotateCcw className="w-4 h-4 group-hover:animate-spin" />
+                <span>Return by Death</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
-        </SidebarMenu>
+          </SidebarMenu>
+        </div>
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarSeparator className="my-2"/>
+      <SidebarFooter className="p-3 border-t border-sidebar-border/50">
         <SidebarMenu>
-            {isAuthenticated ? (
-                <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => signOut()} tooltip="Logout of your account.">
-                        <LogOut />
-                        <span>Logout</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            ) : (
-                <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => signIn('discord')} tooltip="Login with Discord.">
-                        <LogIn />
-                        <span>Login</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            )}
+          {isAuthenticated ? (
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => signOut()} 
+                tooltip="Logout of your account."
+                className="hover:bg-red-500/10 hover:text-red-400 transition-colors text-sidebar-foreground/80"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ) : (
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={() => signIn('discord')} 
+                tooltip="Login with Discord."
+                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Login</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
+        
+        {/* Version/Credits */}
+        <div className="mt-2 pt-2 border-t border-sidebar-border/30">
+          <p className="text-xs text-sidebar-foreground/40 text-center">
+            Natsuki Quest v1.0
+          </p>
+        </div>
       </SidebarFooter>
       
       {/* Lorebook Modal */}
