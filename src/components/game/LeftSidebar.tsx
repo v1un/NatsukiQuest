@@ -5,8 +5,8 @@ import {
     FilePlus, 
     Save, 
     FolderOpen, 
-    RotateCcw, 
-    Flag, 
+    RotateCcw,
+    Brain,
     LogIn,
     LogOut,
     BookOpen,
@@ -27,11 +27,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useToast } from '@/hooks/use-toast';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { GameContext } from '@/contexts/GameContext';
+import { LoreEntry } from '@/lib/types';
 import LorebookViewer from './LorebookViewer';
+import CheckpointStatusSimple from './CheckpointStatusSimple';
+import LoopIntelligencePanel from './LoopIntelligencePanel';
 import QuestJournal from './QuestJournal';
-import type { LoreEntry } from '@/lib/types';
-
-// Placeholder lore data - in production this would come from a database
+import { Button } from '@/components/ui/button';
 const sampleLoreEntries: LoreEntry[] = [
   {
     id: 'lore_1',
@@ -67,13 +68,14 @@ export default function LeftSidebar() {
     }
 
     const { 
+        gameState,
+        isLoading,
         handleStartNewGame, 
         handleLoadGame, 
         handleSaveGame,
-        handleSetCheckpoint,
-        handleReturnByDeath,
         handleGenerateQuest,
-     } = gameContext;
+        handleAnalyzeLoopIntelligence,
+     } = gameContext || {};
 
     const isAuthenticated = status === 'authenticated';
 
@@ -239,34 +241,55 @@ export default function LeftSidebar() {
 
         <SidebarSeparator className="bg-sidebar-border/30" />
 
-        {/* Time Magic Section */}
+        {/* Time Magic Status - AI Controlled */}
         <div className="space-y-2">
           <h3 className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider px-2">
-            Time Magic
+            Return by Death
           </h3>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={handleSetCheckpoint} 
-                tooltip="Set the current moment as your return point."
-                className="hover:bg-sidebar-accent/10 hover:text-sidebar-accent transition-colors"
-              >
-                <Flag className="w-4 h-4" />
-                <span>Set Checkpoint</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                onClick={handleReturnByDeath} 
-                className="text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors group"
-                tooltip="Rewind time to your last checkpoint."
-              >
-                <RotateCcw className="w-4 h-4 group-hover:animate-spin" />
-                <span>Return by Death</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          <div className="p-3 bg-sidebar-card border border-sidebar-border/50 rounded-md">
+            <div className="text-xs text-blue-400 flex items-center gap-2 mb-2">
+              <RotateCcw className="w-3 h-3" />
+              <span>AI-Controlled System</span>
+            </div>
+            <div className="text-xs text-sidebar-foreground/60">
+              Checkpoints and Return by Death are now fully managed by the AI Game Master based on narrative flow.
+            </div>
+          </div>
         </div>
+
+        {/* Loop Intelligence */}
+        {gameState && gameState.currentLoop > 1 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider px-2">
+              Loop Intelligence
+            </h3>
+            {gameState.loopIntelligence ? (
+              <LoopIntelligencePanel 
+                intelligence={gameState.loopIntelligence}
+                onAnalyze={handleAnalyzeLoopIntelligence || (() => {})}
+                isAnalyzing={isLoading}
+              />
+            ) : (
+              <div className="p-3 bg-sidebar-card border border-sidebar-border/50 rounded-md">
+                <div className="text-xs text-purple-400 flex items-center gap-2 mb-2">
+                  <Brain className="w-3 h-3" />
+                  <span>Loop Intelligence Available</span>
+                </div>
+                <div className="text-xs text-sidebar-foreground/60 mb-3">
+                  Analyze your previous loop to gain strategic insights that could help you succeed this time.
+                </div>
+                <Button
+                  onClick={handleAnalyzeLoopIntelligence || (() => {})}
+                  disabled={isLoading || !handleAnalyzeLoopIntelligence}
+                  size="sm"
+                  className="w-full text-xs"
+                >
+                  {isLoading ? 'Analyzing...' : 'Analyze Previous Loop'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3 border-t border-sidebar-border/50">
@@ -313,10 +336,10 @@ export default function LeftSidebar() {
               Lorebook
             </DialogTitle>
           </DialogHeader>
-          {gameContext.gameState && (
+          {gameState && (
             <LorebookViewer 
               loreEntries={sampleLoreEntries}
-              discoveredLoreIds={gameContext.gameState.discoveredLore}
+              discoveredLoreIds={gameState.discoveredLore}
             />
           )}
         </DialogContent>
@@ -331,10 +354,10 @@ export default function LeftSidebar() {
               Quest Journal
             </DialogTitle>
           </DialogHeader>
-          {gameContext.gameState && (
+          {gameState && (
             <QuestJournal 
-              activeQuests={gameContext.gameState.activeQuests}
-              completedQuests={gameContext.gameState.completedQuests}
+              activeQuests={gameState.activeQuests}
+              completedQuests={gameState.completedQuests}
             />
           )}
         </DialogContent>

@@ -137,7 +137,7 @@ export async function testRelationshipConflicts() {
     // Create a conflict
     const conflictResult = await createRelationshipConflict({
       userId: TEST_USER_ID,
-      characters: ['Emilia', 'Rem'],
+      charactersInvolved: ['Emilia', 'Rem'],
       type: 'JEALOUSY',
       severity: 6,
       description: 'Rem shows signs of jealousy over Subaru\'s attention to Emilia',

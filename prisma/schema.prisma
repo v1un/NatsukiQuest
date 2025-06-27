@@ -134,15 +134,15 @@ model EnvironmentalDetail {
 // Relationship conflict system
 model RelationshipConflict {
   id          String      @id @default(cuid())
-  characters  String[]    // Characters involved in conflict
-  type        ConflictType @default(PERSONAL)
-  severity    Int         @default(1) // 1-10 scale
-  description String
-  triggers    String[]    // Actions that can escalate/resolve
-  consequences Json       // Array of consequences
-  isActive    Boolean     @default(true)
-  startedAt   DateTime    @default(now())
-  resolvedAt  DateTime?
+  charactersInvolved  String[]    // Characters involved in conflict
+  type                ConflictType @default(PERSONAL)
+  severity            Int         @default(1) // 1-10 scale
+  description         String
+  triggers            String[]    // Actions that can escalate/resolve
+  consequences        Json       // Array of consequences
+  status              ConflictStatus @default(ACTIVE)
+  startedAt           DateTime    @default(now())
+  resolvedAt          DateTime?
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -169,6 +169,12 @@ enum InteractionType {
   INTERACT
   LORE
   QUEST
+}
+
+enum ConflictStatus {
+  ACTIVE
+  RESOLVED
+  DORMANT
 }
 
 enum ConflictType {

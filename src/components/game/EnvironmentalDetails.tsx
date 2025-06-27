@@ -106,45 +106,37 @@ export default function EnvironmentalDetails() {
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="p-4 space-y-4">
+    <div className="max-h-64 overflow-y-auto">
+      <div className="p-3 space-y-3">
         {/* Current Location Header */}
-        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
-          <CardHeader className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded bg-primary/10">
-                <MapPin className="w-5 h-5 text-primary" />
+        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30">
+          <CardContent className="p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 rounded-lg bg-primary/20">
+                <MapPin className="w-4 h-4 text-primary" />
               </div>
-              <div>
-                <CardTitle className="text-lg font-bold font-headline">{currentLocation}</CardTitle>
-                <CardDescription className="text-sm">Current Location</CardDescription>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-sm font-semibold font-headline truncate">{currentLocation}</CardTitle>
+                <CardDescription className="text-xs">Current Location</CardDescription>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <p className="text-sm text-muted-foreground mb-3">
-              Take a moment to observe your surroundings. There may be hidden details, 
-              interesting objects, or opportunities waiting to be discovered.
-            </p>
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 text-xs h-7"
                 onClick={() => {
-                  // This could trigger a general examination of the area
                   console.log('Examining current location:', currentLocation);
                 }}
               >
                 <Eye className="w-3 h-3" />
-                Look Around
+                Look
               </Button>
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 text-xs h-7"
                 onClick={() => {
-                  // This could trigger searching for hidden details
                   console.log('Searching current location:', currentLocation);
                 }}
               >
@@ -158,13 +150,6 @@ export default function EnvironmentalDetails() {
         {/* Environmental Details */}
         {currentLocationDetails.length > 0 ? (
           <>
-            <div className="flex items-center gap-2 px-1">
-              <h3 className="text-sm font-semibold text-foreground">Points of Interest</h3>
-              <Badge variant="secondary" className="text-xs">
-                {currentLocationDetails.length}
-              </Badge>
-            </div>
-            
             {currentLocationDetails.map((detail) => {
               const IconComponent = getInteractionIcon(detail.interactionType);
               const iconColor = getInteractionColor(detail.interactionType);
@@ -172,38 +157,38 @@ export default function EnvironmentalDetails() {
               return (
                 <Card 
                   key={detail.id} 
-                  className={`bg-background/50 border-border/50 hover:bg-background/70 transition-all duration-300 ${
-                    detail.isDiscovered ? 'border-l-4 border-l-primary/50' : ''
+                  className={`bg-card/50 border-border/30 hover:bg-card/70 transition-all duration-200 shadow-sm ${
+                    detail.isDiscovered ? 'border-l-2 border-l-primary/60' : ''
                   } ${
-                    interactingWith === detail.id ? 'ring-2 ring-primary/50 animate-pulse scale-[1.02]' : ''
+                    interactingWith === detail.id ? 'ring-1 ring-primary/50' : ''
                   }`}
                 >
-                  <CardHeader className="p-3">
-                    <div className="flex items-center gap-2">
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
                       <IconComponent className={`w-4 h-4 ${iconColor}`} />
-                      <CardTitle className="text-sm font-medium flex-1">
-                        {detail.interactionType.charAt(0) + detail.interactionType.slice(1).toLowerCase()} Opportunity
+                      <CardTitle className="text-sm font-medium flex-1 truncate">
+                        {detail.interactionType.charAt(0) + detail.interactionType.slice(1).toLowerCase()}
                       </CardTitle>
                       <Badge 
                         variant={detail.isDiscovered ? 'default' : 'secondary'} 
-                        className="text-xs"
+                        className="text-xs px-1.5 py-0.5"
                       >
-                        {detail.isDiscovered ? 'Discovered' : 'Hidden'}
+                        {detail.isDiscovered ? '✓' : '?'}
                       </Badge>
                     </div>
-                  </CardHeader>
-                  <CardContent className="p-3 pt-0">
-                    <p className="text-xs text-muted-foreground mb-3">
+                    
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
                       {detail.isDiscovered 
                         ? detail.description 
-                        : 'Something catches your attention here. Investigate to learn more.'
+                        : 'Something catches your attention here.'
                       }
                     </p>
-                    <div className="flex gap-2">
+                    
+                    <div className="flex gap-1">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex items-center gap-1 text-xs"
+                        className="flex items-center gap-1 text-xs h-6 px-2"
                         onClick={() => handleInteraction(detail.id, 'EXAMINE')}
                         disabled={(detail.isDiscovered && detail.interactionType === 'EXAMINE') || interactingWith === detail.id || isLoading}
                       >
@@ -212,13 +197,13 @@ export default function EnvironmentalDetails() {
                         ) : (
                           <Eye className="w-3 h-3" />
                         )}
-                        {interactingWith === detail.id ? 'Examining...' : 'Examine'}
+                        Examine
                       </Button>
                       {detail.interactionType !== 'EXAMINE' && (
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="flex items-center gap-1 text-xs"
+                          className="flex items-center gap-1 text-xs h-6 px-2"
                           onClick={() => handleInteraction(detail.id, detail.interactionType)}
                           disabled={(detail.interactionType === 'LORE' && detail.isDiscovered) || interactingWith === detail.id || isLoading}
                         >
@@ -227,50 +212,25 @@ export default function EnvironmentalDetails() {
                           ) : (
                             <IconComponent className="w-3 h-3" />
                           )}
-                          {interactingWith === detail.id 
-                            ? `${detail.interactionType.charAt(0) + detail.interactionType.slice(1).toLowerCase()}...`
-                            : detail.interactionType.charAt(0) + detail.interactionType.slice(1).toLowerCase()
-                          }
+                          {detail.interactionType.charAt(0) + detail.interactionType.slice(1).toLowerCase()}
                         </Button>
                       )}
                     </div>
-                    {detail.isDiscovered && detail.discoveredAt && (
-                      <div className="mt-2 pt-2 border-t border-border/30">
-                        <p className="text-xs text-muted-foreground">
-                          Discovered: {new Date(detail.discoveredAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               );
             })}
           </>
         ) : (
-          <Card className="bg-background/30 border-dashed border-border/50">
-            <CardContent className="p-6 text-center">
-              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <h3 className="text-sm font-medium text-foreground mb-2">
-                Nothing Obvious
-              </h3>
-              <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-                You don't notice anything particularly interesting at first glance. 
-                Perhaps a closer look around might reveal hidden details.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="text-center py-6 px-4 text-muted-foreground">
+            <div className="p-3 bg-muted/20 rounded-full w-fit mx-auto mb-3">
+              <Search className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-medium">Nothing obvious here</p>
+            <p className="text-xs mt-1">Try looking around more carefully</p>
+          </div>
         )}
-
-        {/* Help Text */}
-        <Card className="bg-muted/30 border-muted/50">
-          <CardContent className="p-3">
-            <p className="text-xs text-muted-foreground text-center">
-              <strong>Tip:</strong> Environmental details can reveal lore, trigger quests, 
-              or provide useful items. Take time to explore your surroundings!
-            </p>
-          </CardContent>
-        </Card>
       </div>
-    </ScrollArea>
+    </div>
   );
 }

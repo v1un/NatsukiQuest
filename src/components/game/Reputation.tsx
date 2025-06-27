@@ -83,21 +83,19 @@ export default function Reputation() {
 
   if (reputations.length === 0) {
     return (
-      <div className="p-4 flex flex-col items-center justify-center h-full text-center">
-        <Users className="w-16 h-16 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-headline font-semibold text-foreground mb-2">
-          No Faction Relations
-        </h3>
-        <p className="text-sm text-muted-foreground max-w-xs">
-          As you interact with different groups and make choices, your reputation with various factions will appear here.
-        </p>
+      <div className="text-center py-6 px-4 text-muted-foreground">
+        <div className="p-3 bg-muted/20 rounded-full w-fit mx-auto mb-3">
+          <Users className="w-6 h-6" />
+        </div>
+        <p className="text-sm font-medium">No faction relations yet</p>
+        <p className="text-xs mt-1">Your reputation will build as you interact with different groups</p>
       </div>
     );
   }
 
   return (
-    <ScrollArea className="h-full">
-      <div className="p-4 space-y-4">
+    <div className="max-h-64 overflow-y-auto">
+      <div className="p-3 space-y-3">
         {reputations.map((reputation) => {
           const IconComponent = getFactionIcon(reputation.faction);
           const title = getReputationTitle(reputation.faction, reputation.level);
@@ -105,43 +103,39 @@ export default function Reputation() {
           const progressValue = ((reputation.level + 100) / 200) * 100; // Convert -100/100 to 0-100 scale
 
           return (
-            <Card key={reputation.id} className="bg-background/50 border-border/50 hover:bg-background/70 transition-colors">
-              <CardHeader className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded bg-primary/10">
-                    <IconComponent className="w-5 h-5 text-primary" />
+            <Card key={reputation.id} className="bg-card/50 border-border/30 hover:bg-card/70 transition-all duration-200 shadow-sm">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                    <IconComponent className="w-4 h-4 text-primary" />
                   </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-base font-bold font-headline">{reputation.faction}</CardTitle>
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-sm font-semibold font-headline truncate">{reputation.faction}</CardTitle>
                     <CardDescription className="text-xs">{title}</CardDescription>
                   </div>
                   <Badge 
                     variant={reputation.level >= 0 ? 'default' : 'destructive'} 
-                    className="text-xs px-2 py-1"
+                    className="text-xs px-2 py-0.5"
                   >
                     {reputation.level > 0 ? '+' : ''}{reputation.level}
                   </Badge>
                 </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
+                
                 <div className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Standing</span>
-                    <span className={`font-medium ${colorClass}`}>{title}</span>
-                  </div>
                   <Progress 
                     value={progressValue} 
-                    className="h-2" 
+                    className="h-1.5" 
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Despised</span>
-                    <span>Neutral</span>
+                    <span>Hostile</span>
+                    <span className={`font-medium ${colorClass}`}>{title}</span>
                     <span>Revered</span>
                   </div>
+                  
                   {reputation.history && reputation.history.length > 0 && (
-                    <div className="mt-3 pt-2 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground mb-1">Recent Activity:</p>
-                      <p className="text-xs text-foreground">
+                    <div className="mt-2 pt-2 border-t border-border/30">
+                      <p className="text-xs text-muted-foreground mb-1">Recent:</p>
+                      <p className="text-xs text-foreground line-clamp-2">
                         {reputation.history[reputation.history.length - 1].reason}
                       </p>
                     </div>
@@ -152,6 +146,6 @@ export default function Reputation() {
           );
         })}
       </div>
-    </ScrollArea>
+    </div>
   );
 }

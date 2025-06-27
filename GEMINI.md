@@ -31,7 +31,7 @@ NatsukiQuest is a web-based, AI-powered role-playing game (RPG). It utilizes a N
     - Create a `.env` file based on `.env.example` (if it exists) and configure your `DATABASE_URL`.
     - Run database migrations:
       ```bash
-      npx prisma migrate dev
+      npx prisma migrate dev # NOTE: This command requires user interaction and should be run manually.
       ```
 
 ### 3.2. Development

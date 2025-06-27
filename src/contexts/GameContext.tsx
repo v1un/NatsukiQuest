@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useState, useCallback, ReactNode } from 'react';
-import type { GameState, Quest, Reputation, ReputationChange, EnvironmentalDetail } from '@/lib/types';
-import { startNewGame, makeChoice, triggerReturnByDeath, saveGame, loadMostRecentGame } from '@/app/actions';
+import type { GameState, Quest, Reputation, ReputationChange, EnvironmentalDetail, LoopIntelligence, LoreEntry } from '@/lib/types';
+import { startNewGame, makeChoice, saveGame, loadMostRecentGame, analyzeLoopIntelligence } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { initialGameState } from '@/lib/initial-game-state';
 
@@ -13,8 +13,7 @@ interface GameContextType {
     error: string | null;
     handleStartNewGame: () => Promise<void>;
     handleMakeChoice: (choice: string) => Promise<void>;
-    handleReturnByDeath: () => Promise<void>;
-    handleSetCheckpoint: () => void;
+
     handleSaveGame: () => Promise<void>;
     handleLoadGame: () => Promise<void>;
     handleQuestUpdate: (questId: string, updates: Partial<Quest>) => void;
@@ -23,6 +22,11 @@ interface GameContextType {
     handleEnvironmentInteract: (environmentId: string, interactionType?: string) => Promise<void>;
     handleGenerateQuest: (questType?: 'ROMANCE' | 'FACTION' | 'EXPLORATION' | 'SIDE' | 'AUTO', targetCharacter?: string) => Promise<void>;
     handleAdvancedGameAction: (action: string, context?: any) => Promise<void>;
+    handleAnalyzeLoopIntelligence: () => Promise<void>;
+    
+    // Development-only functions
+    devAddTestCharacters?: () => void;
+    devClearCharacters?: () => void;
 }
 
 export const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -55,6 +59,25 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         try {
             const newState = await makeChoice(gameState, choice);
             setGameState(newState);
+            
+            // Handle AI-controlled checkpoint notifications
+            if ((newState as any).aiCheckpointSet) {
+                toast({
+                    title: "Checkpoint Set",
+                    description: (newState as any).checkpointReason || "The AI Game Master has set a checkpoint at this moment.",
+                    className: "bg-blue-600 text-white"
+                });
+            }
+            
+            // Handle AI-controlled Return by Death notifications
+            if ((newState as any).aiRbdTriggered) {
+                toast({
+                    title: "Return by Death Activated",
+                    description: (newState as any).rbdReason || "The AI Game Master triggered your return automatically.",
+                    className: "bg-gradient-to-r from-red-600 to-purple-600 text-white"
+                });
+            }
+            
             if (newState.isGameOver) {
                 toast({
                     title: "A terrible fate...",
@@ -71,35 +94,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const handleReturnByDeath = async () => {
-        if (!gameState) return;
-        setIsLoading(true);
-        setIsRewinding(true);
-        try {
-            const newState = await triggerReturnByDeath(gameState);
-            setGameState(newState);
-            toast({
-                title: "You have Returned by Death!",
-                description: `This is your loop #${newState.currentLoop}. The world doesn't remember, but you do.`,
-                className: "bg-primary text-primary-foreground"
-            });
-        } catch (e) {
-            setError('An error occurred while trying to return.');
-            console.error(e);
-        } finally {
-            setTimeout(() => setIsRewinding(false), 800);
-            setIsLoading(false);
-        }
-    };
 
-    const handleSetCheckpoint = () => {
-        if (!gameState) return;
-        setGameState(prev => prev ? { ...prev, checkpoint: JSON.parse(JSON.stringify(prev)) } : null);
-        toast({
-            title: "Checkpoint Set",
-            description: "Your current state has been saved as a checkpoint for 'Return by Death'.",
-        });
-    };
 
     const handleSaveGame = async () => {
         if (!gameState) {
@@ -346,13 +341,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                         });
                         
                         // Update game state with quest results
+                        // Characters are now managed through AI tools, not response
                         setGameState(prev => {
                             if (!prev) return null;
                             return {
                                 ...prev,
                                 currentText: questResult.newNarrative,
                                 choices: questResult.newChoices,
-                                characters: questResult.updatedCharacters,
                                 inventory: questResult.updatedInventory || prev.inventory
                             };
                         });
@@ -367,6 +362,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                     
                 case 'EXAMINE':
                 case 'INTERACT':
+                case 'LORE':
+                case 'QUEST':
+                case 'MOVE':
                 default:
                     // Standard examination/interaction
                     const { aiGameMaster } = await import('@/ai/flows/ai-game-master');
@@ -384,13 +382,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                     });
                     
                     // Update game state with examination results
+                    // Characters are now managed through AI tools, not response
                     setGameState(prev => {
                         if (!prev) return null;
                         return {
                             ...prev,
                             currentText: examineResult.newNarrative,
                             choices: examineResult.newChoices,
-                            characters: examineResult.updatedCharacters,
                             inventory: examineResult.updatedInventory || prev.inventory
                         };
                     });
@@ -520,6 +518,94 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [gameState, toast]);
 
+    const handleAnalyzeLoopIntelligence = useCallback(async () => {
+        if (!gameState) return;
+        
+        setIsLoading(true);
+        try {
+            const intelligence = await analyzeLoopIntelligence(gameState);
+            setGameState(prev => prev ? { ...prev, loopIntelligence: intelligence } : null);
+            
+            toast({
+                title: "Loop Intelligence Analyzed",
+                description: "Strategic insights from your previous loop have been compiled.",
+                className: "bg-blue-600 text-white"
+            });
+        } catch (error) {
+            console.error('Error analyzing loop intelligence:', error);
+            setError('Failed to analyze loop intelligence');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [gameState, toast]);
+
+    // Development-only functions
+    const devAddTestCharacters = useCallback(() => {
+        if (process.env.NODE_ENV !== 'development' || !gameState) return;
+        
+        const testCharacters = [
+            {
+                name: 'Alice',
+                affinity: 60,
+                status: 'Friendly',
+                description: 'A test character who likes to help players.',
+                avatar: 'https://placehold.co/100x100/blue/white?text=A',
+                currentLocation: gameState.currentLocation,
+                firstMetAt: gameState.currentLocation,
+                lastSeenAt: new Date(),
+                isImportant: false
+            },
+            {
+                name: 'Bob',
+                affinity: 40,
+                status: 'Neutral',
+                description: 'A test character who is cautious around strangers.',
+                avatar: 'https://placehold.co/100x100/green/white?text=B',
+                currentLocation: gameState.currentLocation,
+                firstMetAt: gameState.currentLocation,
+                lastSeenAt: new Date(),
+                isImportant: false
+            },
+            {
+                name: 'Charlie',
+                affinity: 80,
+                status: 'Close Friend',
+                description: 'A test character who trusts the player completely.',
+                avatar: 'https://placehold.co/100x100/purple/white?text=C',
+                currentLocation: 'Different Location',
+                firstMetAt: 'Different Location',
+                lastSeenAt: new Date(),
+                isImportant: true
+            }
+        ];
+
+        setGameState(prev => prev ? {
+            ...prev,
+            characters: [...prev.characters, ...testCharacters]
+        } : null);
+
+        toast({
+            title: 'Test Characters Added',
+            description: `Added ${testCharacters.length} test characters to the game.`,
+            className: 'bg-blue-600 text-white'
+        });
+    }, [gameState, toast]);
+
+    const devClearCharacters = useCallback(() => {
+        if (process.env.NODE_ENV !== 'development' || !gameState) return;
+        
+        setGameState(prev => prev ? {
+            ...prev,
+            characters: []
+        } : null);
+
+        toast({
+            title: 'Characters Cleared',
+            description: 'All characters have been removed from the game.',
+            className: 'bg-red-600 text-white'
+        });
+    }, [gameState, toast]);
+
     const contextValue = {
         gameState,
         isLoading,
@@ -527,8 +613,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         error,
         handleStartNewGame,
         handleMakeChoice,
-        handleReturnByDeath,
-        handleSetCheckpoint,
         handleSaveGame,
         handleLoadGame,
         handleQuestUpdate,
@@ -537,6 +621,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         handleEnvironmentInteract,
         handleGenerateQuest,
         handleAdvancedGameAction,
+        handleAnalyzeLoopIntelligence,
+        // Include dev functions only in development
+        ...(process.env.NODE_ENV === 'development' && {
+            devAddTestCharacters,
+            devClearCharacters,
+        }),
     };
 
     return (

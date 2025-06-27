@@ -411,7 +411,7 @@ export const createRelationshipConflict = ai.defineTool(
     description: 'Create a new relationship conflict between characters that can affect story progression.',
     inputSchema: z.object({
       userId: z.string().describe('The player\'s user ID'),
-      characters: z.array(z.string()).describe('Characters involved in the conflict'),
+      charactersInvolved: z.array(z.string()).describe('Characters involved in the conflict'),
       type: z.enum(['JEALOUSY', 'RIVALRY', 'ROMANCE', 'POLITICAL', 'PERSONAL']).describe('Type of conflict'),
       severity: z.number().min(1).max(10).describe('Conflict severity (1-10)'),
       description: z.string().describe('Description of the conflict'),
@@ -436,13 +436,13 @@ export const createRelationshipConflict = ai.defineTool(
 
       const conflict: RelationshipConflict = {
         id: conflictId,
-        characters: input.characters,
+        charactersInvolved: input.charactersInvolved,
         type: input.type,
         severity: input.severity,
         description: input.description,
         triggers: input.triggers,
         consequences: input.consequences as ConflictConsequence[],
-        isActive: true,
+        status: "ACTIVE",
         startedAt: new Date(),
       };
 
@@ -451,13 +451,13 @@ export const createRelationshipConflict = ai.defineTool(
         data: {
           id: conflictId,
           userId: input.userId,
-          characters: input.characters,
+          charactersInvolved: input.charactersInvolved,
           type: input.type,
           severity: input.severity,
           description: input.description,
           triggers: input.triggers,
           consequences: input.consequences as any,
-          isActive: true,
+          status: conflict.status,
           startedAt: new Date(),
         },
       });
@@ -485,7 +485,7 @@ export const createRelationshipConflict = ai.defineTool(
 
       return {
         success: true,
-        message: `Relationship conflict created between ${input.characters.join(' and ')}`,
+        message: `Relationship conflict created between ${input.charactersInvolved.join(' and ')}`,
         conflictId,
       };
     } catch (error) {
@@ -547,11 +547,11 @@ export const resolveRelationshipConflict = ai.defineTool(
       const appliedConsequences: any[] = [];
 
       if (input.resolution === 'RESOLVE') {
-        conflict.isActive = false;
+        conflict.status = 'RESOLVED';
         conflict.resolvedAt = new Date();
         
         // Apply positive consequences
-        for (const consequence of conflict.consequences) {
+        for (const consequence of conflict.consequences || []) {
           if (consequence.affinityChange > 0) {
             appliedConsequences.push({
               character: consequence.character,
@@ -561,10 +561,10 @@ export const resolveRelationshipConflict = ai.defineTool(
           }
         }
       } else if (input.resolution === 'ESCALATE') {
-        conflict.severity = Math.min(10, conflict.severity + 1);
+        conflict.severity = Math.min(10, (conflict.severity || 0) + 1);
         
         // Apply negative consequences
-        for (const consequence of conflict.consequences) {
+        for (const consequence of conflict.consequences || []) {
           if (consequence.affinityChange < 0) {
             appliedConsequences.push({
               character: consequence.character,
@@ -583,7 +583,7 @@ export const resolveRelationshipConflict = ai.defineTool(
         where: { id: input.conflictId },
         data: {
           severity: conflict.severity,
-          isActive: conflict.isActive,
+          status: conflict.status,
           resolvedAt: conflict.resolvedAt,
         },
       });
@@ -601,11 +601,11 @@ export const resolveRelationshipConflict = ai.defineTool(
 
       let message = '';
       if (input.resolution === 'RESOLVE') {
-        message = `Conflict resolved! ${conflict.characters.join(' and ')} have reconciled.`;
+        message = `Conflict resolved! ${conflict.charactersInvolved.join(' and ')} have reconciled.`;
       } else if (input.resolution === 'ESCALATE') {
-        message = `Conflict escalated! Tension between ${conflict.characters.join(' and ')} increases.`;
+        message = `Conflict escalated! Tension between ${conflict.charactersInvolved.join(' and ')} increases.`;
       } else {
-        message = `Temporary calm achieved in the conflict between ${conflict.characters.join(' and ')}.`;
+        message = `Temporary calm achieved in the conflict between ${conflict.charactersInvolved.join(' and ')}.`;
       }
 
       return {

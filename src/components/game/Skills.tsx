@@ -43,22 +43,32 @@ export default function Skills() {
   const skills = gameState.skills;
 
   return (
-    <ScrollArea className="h-full">
-      <div className="p-4 space-y-2">
-        {skills.map((skill) => (
-          <Card key={skill.id} className="bg-transparent border-0 shadow-none">
-            <CardContent className="p-2 flex items-start gap-3">
-              <div className="p-2 bg-accent/10 rounded-md">
-                 <Icon name={skill.icon as IconName} className="w-5 h-5 text-accent" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-sm text-foreground">{skill.name}</h4>
-                <p className="text-xs text-muted-foreground">{skill.description}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="max-h-64 overflow-y-auto">
+      <div className="p-3 space-y-2">
+        {skills.length > 0 ? (
+          skills.map((skill) => (
+            <Card key={skill.id} className="bg-card/50 border-border/30 hover:bg-card/70 transition-all duration-200 shadow-sm">
+              <CardContent className="p-3 flex items-start gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
+                   <Icon name={skill.icon as IconName} className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm text-foreground truncate">{skill.name}</h4>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{skill.description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="text-center py-6 px-4 text-muted-foreground">
+            <div className="p-3 bg-muted/20 rounded-full w-fit mx-auto mb-3">
+              <Icon name="Sparkles" className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-medium">No skills learned yet</p>
+            <p className="text-xs mt-1">Skills will unlock as you progress</p>
+          </div>
+        )}
       </div>
-    </ScrollArea>
+    </div>
   );
 }

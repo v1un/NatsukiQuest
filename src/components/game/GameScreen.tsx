@@ -1,19 +1,23 @@
 'use client';
 
-import { useContext, useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { GameContext } from '@/contexts/GameContext';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Loader, Dices, AlertTriangle } from 'lucide-react';
+import { Loader, Dices, AlertTriangle, Bug, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/ui/sidebar';
+import CharacterSystemStatus from '@/components/dev/CharacterSystemStatus';
 
 export default function GameScreen() {
     const context = useContext(GameContext);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { setOpen: setLeftSidebarOpen } = useSidebar();
     const { setOpenMobile: setRightSidebarOpen } = useSidebar();
+    
+    // Development debug UI toggle
+    const [showDebugUI, setShowDebugUI] = useState(false);
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -24,12 +28,27 @@ export default function GameScreen() {
         }
     }, [context?.gameState?.narrative]);
 
+    // Add keyboard shortcut for debug UI toggle (Ctrl+D in development)
+    useEffect(() => {
+        if (process.env.NODE_ENV !== 'development') return;
+        
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.ctrlKey && event.key === 'd' && !event.altKey && !event.shiftKey) {
+                event.preventDefault();
+                setShowDebugUI(prev => !prev);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
 
     if (!context) {
         return <div className="flex h-full items-center justify-center">Context not available</div>;
     }
 
-    const { gameState, isLoading, isRewinding, error, handleStartNewGame, handleMakeChoice, handleReturnByDeath } = context;
+    const { gameState, isLoading, isRewinding, error, handleStartNewGame, handleMakeChoice } = context;
 
     if (isLoading && !gameState) {
         return (
@@ -139,14 +158,12 @@ export default function GameScreen() {
                             <div className="text-center space-y-4 p-4">
                                 <div className="space-y-2">
                                     <p className="danger-text text-lg font-bold">You have met a terrible end.</p>
-                                    <p className="text-muted-foreground text-sm">But this is not the true ending...</p>
+                                    <p className="text-muted-foreground text-sm">The AI Game Master will determine your fate...</p>
                                 </div>
-                                <Button 
-                                    onClick={handleReturnByDeath} 
-                                    className="choice-button bg-gradient-to-r from-destructive to-rezero-danger hover:from-destructive/90 hover:to-rezero-danger/90 text-destructive-foreground px-8 py-3 text-lg font-bold shadow-lg hover:shadow-xl"
-                                >
-                                    ⟲ Return by Death
-                                </Button>
+                                <div className="text-muted-foreground text-sm space-y-1">
+                                    <p>⟲ Return by Death is now controlled by the AI Narrator</p>
+                                    <p>The story will continue based on narrative needs</p>
+                                </div>
                             </div>
                         ) : (
                             <div className="w-full max-w-5xl mx-auto">
@@ -180,6 +197,44 @@ export default function GameScreen() {
                     </motion.div>
                 </AnimatePresence>
             </footer>
+            
+            {/* Development-only debug UI toggle button */}
+            {process.env.NODE_ENV === 'development' && (
+                <div className="fixed top-4 right-4 z-50 flex flex-col items-end gap-1">
+                    <Button
+                        size="sm"
+                        variant={showDebugUI ? "default" : "outline"}
+                        className="bg-background/90 backdrop-blur-sm border shadow-lg"
+                        onClick={() => setShowDebugUI(!showDebugUI)}
+                        title="Toggle Debug UI (Ctrl+D)"
+                    >
+                        {showDebugUI ? <X className="h-4 w-4" /> : <Bug className="h-4 w-4" />}
+                        <span className="ml-2 text-xs">DEBUG</span>
+                    </Button>
+                    {!showDebugUI && (
+                        <div className="text-xs text-muted-foreground bg-background/80 backdrop-blur-sm px-2 py-1 rounded border text-right">
+                            Press <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Ctrl+D</kbd>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Development-only character system status */}
+            {process.env.NODE_ENV === 'development' && (
+                <AnimatePresence>
+                    {showDebugUI && (
+                        <motion.div
+                            initial={{ opacity: 0, x: 300 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 300 }}
+                            transition={{ duration: 0.3 }}
+                            className="fixed top-20 right-4 max-w-md max-h-[calc(100vh-6rem)] overflow-y-auto z-40"
+                        >
+                            <CharacterSystemStatus onClose={() => setShowDebugUI(false)} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            )}
         </div>
     );
 }

@@ -1,96 +1,101 @@
 import type { GameState } from '@/lib/types';
 
 export const initialGameState: GameState = {
-  narrative: `You blink, and the familiar sight of the convenience store dissolves into a riot of color and noise. A bustling street, filled with strange people and stranger creatures, stretches before you. A dragon-drawn carriage clatters past. The air smells of spices you can't name. This is definitely not Japan. You are Natsuki Subaru, and your adventure in another world has just begun. Before you can get your bearings, you spot a flash of silver hair and purple eyes in the crowd—a girl with an ethereal beauty, clearly in distress.`,
+  narrative: `Sunlight stabs your eyes, a stark contrast to the fluorescent hum of the convenience store you were just in. The scent of roasted nuts and strange, sweet flowers overwhelms the lingering smell of instant noodles on your tracksuit. A cacophony of sounds—the clatter of wooden wheels on cobblestone, the chatter of voices in an unknown tongue, the distant cry of some winged beast—assaults your ears. You are Natsuki Subaru, a bewildered teenager clutching a plastic bag of groceries, suddenly and inexplicably standing in the heart of a bustling fantasy city. The market district around you thrums with life as merchants hawk their wares and people of various races go about their daily business. This strange new world feels both wondrous and overwhelming.`,
   choices: [
-    "Try to help the silver-haired girl.",
-    "Ignore her and explore the city.",
-    "Look for someone who can explain what's happening."
+    "Approach the crowd that seems to be gathering around something important.",
+    "Stay back and observe the situation from a safe distance.",
+    "Find a quiet alley to try and make sense of what just happened.",
+    "Examine the contents of your grocery bag for anything useful."
   ],
-  characters: [
-    {
-      name: "Emilia",
-      affinity: 10,
-      status: "Met",
-      description: "A kind-hearted half-elf with a troubled past, currently a candidate for the royal selection.",
-      avatar: "https://placehold.co/100x100.png",
-    },
-    {
-      name: "Puck",
-      affinity: 5,
-      status: "Met",
-      description: "Emilia's spirit companion, a powerful being in the form of a small, cat-like creature.",
-      avatar: "https://placehold.co/100x100.png",
-    }
-  ],
+  characters: [], // Characters are now tracked dynamically as they're encountered
   inventory: [
     {
       id: "item_1",
       name: "Flip Phone",
-      description: "A relic from your old world. Mostly useless, but holds sentimental value.",
+      description: "Your trusty 'garakei'. No signal here, making it a glorified paperweight. The battery is at 82%.",
       icon: "Smartphone",
     },
     {
       id: "item_2",
-      name: "Bag of Groceries",
-      description: "Some snacks you bought. Might come in handy.",
+      name: "Bag of Convenience Store Snacks",
+      description: "A plastic bag containing a bag of potato chips, a cup of instant ramen, and a bottle of green tea. A taste of home.",
       icon: "ShoppingBag",
+    },
+    {
+      id: "item_3",
+      name: "Tracksuit",
+      description: "The height of modern fashion (in your opinion). Not particularly durable or warm, but it's comfortable.",
+      icon: "Shirt",
     }
   ],
   skills: [
     {
       id: "skill_1",
       name: "Return by Death",
-      description: "Upon death, you return to a previous 'save point' in time. You are the only one who remembers what happened.",
+      description: "Upon death, you are resurrected at a prior 'checkpoint' in time, with full memory of the events that led to your demise. A terrible and powerful curse.",
       icon: "ClockRewind",
+    },
+    {
+      id: "skill_2",
+      name: "Modern World Knowledge",
+      description: "You know about things like germs, basic physics, and pop culture. It's unclear how useful this will be.",
+      icon: "BrainCircuit",
     }
   ],
   currentLoop: 1,
   isGameOver: false,
   checkpoint: null,
   lastOutcome: "",
-  memory: "",
-  // New system initializations
+  memory: "Woke up in a fantasy world. Saw a silver-haired girl in trouble.",
   discoveredLore: [],
   activeQuests: [
     {
       id: "quest_main_1",
-      title: "Find Your Place in This New World",
-      description: "You've been transported to a fantasy world. Figure out how to survive and find your purpose.",
+      title: "The Stolen Insignia",
+      description: "The silver-haired girl, Emilia, has had her royal insignia stolen. Recovering it seems to be the first major event in this new world.",
       category: "MAIN",
       status: "ACTIVE",
       objectives: [
         {
           id: "obj_1",
-          description: "Meet the locals and understand the world",
+          description: "Speak with Emilia to learn more about the theft.",
           isCompleted: false,
-          progress: 0,
-          maxProgress: 3
         },
         {
-          id: "obj_2", 
-          description: "Find a place to stay for the night",
+          id: "obj_2",
+          description: "Track the thief to their hideout.",
+          isCompleted: false
+        },
+        {
+          id: "obj_3",
+          description: "Recover the insignia.",
           isCompleted: false
         }
       ],
       rewards: [
         {
-          type: "SKILL",
-          skillId: "basic_survival",
+          type: "REPUTATION",
+          faction: "Emilia Camp",
+          amount: 25
+        },
+        {
+          type: "ITEM",
+          itemId: "emilia_favor",
           amount: 1
         }
       ],
       startedAt: new Date(),
       location: "Lugunica Capital",
-      npcsInvolved: ["Emilia"],
+      npcsInvolved: [], // NPCs will be added dynamically as they're encountered
       prerequisites: []
     }
   ],
   completedQuests: [],
   reputations: [
     {
-      id: "rep_lugunica",
-      faction: "Kingdom of Lugunica",
+      id: "rep_lugunica_royal_guard",
+      faction: "Royal Guard of Lugunica",
       level: 0,
       history: []
     },
@@ -98,15 +103,21 @@ export const initialGameState: GameState = {
       id: "rep_emilia_camp",
       faction: "Emilia Camp",
       level: 5,
-      title: "Curious Stranger",
+      title: "Potential Ally",
       history: [
         {
           amount: 5,
-          reason: "Initial meeting with Emilia",
+          reason: "Initial encounter with Emilia",
           timestamp: new Date(),
           location: "Lugunica Capital"
         }
       ]
+    },
+    {
+      id: "rep_slums",
+      faction: "Slums of Lugunica",
+      level: 0,
+      history: []
     }
   ],
   currentLocation: "Lugunica Capital - Market District",
@@ -114,10 +125,29 @@ export const initialGameState: GameState = {
     {
       id: "env_1",
       location: "Lugunica Capital - Market District",
-      description: "The bustling market streets are filled with exotic goods and strange creatures. Dragon-drawn carriages navigate between pedestrians, and the air is thick with foreign spices and magical energy.",
+      description: "The main thoroughfare is a vibrant, chaotic mix of species and commerce. Humans, demi-humans, and beast-men haggle over goods under the watchful eyes of the city guard. The architecture is a blend of medieval European and high fantasy.",
       interactionType: "EXAMINE",
+      isDiscovered: true
+    },
+    {
+      id: "env_2",
+      location: "Lugunica Capital - Back Alley",
+      description: "A maze of narrow, shadowy alleys behind the main market. The air is cooler here, and the sounds of the crowd are muffled. It feels like a place where secrets are traded and dangers lurk.",
+      interactionType: "MOVE",
       isDiscovered: false
     }
   ],
-  relationshipConflicts: []
+  relationshipConflicts: [], // Conflicts will be created dynamically as characters are introduced
+  worldState: {
+      timeOfDay: "Afternoon",
+      weather: "Sunny",
+      majorEvents: [
+          {
+              id: "event_royal_selection",
+              name: "The Royal Selection",
+              description: "The Kingdom of Lugunica is in the process of selecting its next ruler from a pool of candidates.",
+              isActive: true
+          }
+      ]
+  }
 };

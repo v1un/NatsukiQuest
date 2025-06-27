@@ -1,9 +1,39 @@
+// New types for advanced systems
+export interface WorldState {
+  timeOfDay: 'Morning' | 'Afternoon' | 'Evening' | 'Night';
+  weather: 'Clear' | 'Cloudy' | 'Rainy' | 'Stormy' | 'Sunny';
+  majorEvents: Array<{
+    id: string;
+    name: string;
+    description: string;
+    isActive: boolean;
+  }>;
+}
+
+export interface CharacterBond {
+  characterName: string;
+  relationship: string; // e.g., "Friend", "Rival", "Family"
+  strength: number; // 0-100
+  description?: string; // Optional description of the relationship
+}
+
 export interface Character {
   name: string;
   affinity: number; // 0-100
   status: string;
   description: string;
   avatar: string; // URL to placeholder
+  bonds?: CharacterBond[];
+  currentLocation: string; // Where the character is currently located
+  firstMetAt?: string; // Where the player first encountered this character
+  lastSeenAt?: Date; // When the character was last encountered
+  lastInteractionReason?: string; // Reason for last affinity change
+  isImportant?: boolean; // Whether this is a major story character
+  locationHistory?: Array<{
+    location: string;
+    leftAt: Date;
+    reason?: string;
+  }>;
 }
 
 // Database model interfaces to match Prisma schema
@@ -34,6 +64,7 @@ export interface Item {
   name: string;
   description: string;
   icon: string; // lucide-react icon name
+  quantity?: number;
 }
 
 export interface Skill {
@@ -41,6 +72,41 @@ export interface Skill {
   name: string;
   description: string;
   icon: string; // lucide-react icon name
+}
+
+export interface RbDLoss {
+  type: 'inventory' | 'relationship' | 'progress' | 'knowledge' | 'location' | 'quest' | 'skill';
+  description: string;
+  details: string;
+  severity: 'minor' | 'moderate' | 'major';
+}
+
+export interface LoopIntelligence {
+  keyInsights: Array<{
+    category: 'character_behavior' | 'environmental_hazard' | 'timing' | 'dialogue_clue' | 'hidden_mechanic' | 'strategic_opportunity';
+    insight: string;
+    actionableAdvice: string;
+    confidence: 'high' | 'medium' | 'low';
+  }>;
+  strategicRecommendations: string[];
+  warningsToAvoid: string[];
+  optimalTiming: Array<{
+    action: string;
+    timing: string;
+    reason: string;
+  }>;
+  characterIntel: Array<{
+    characterName: string;
+    behaviorPattern: string;
+    exploitableWeakness?: string;
+    trustworthiness: 'high' | 'medium' | 'low' | 'hostile';
+  }>;
+  hiddenOpportunities: string[];
+  criticalMistakes: Array<{
+    mistake: string;
+    consequence: string;
+    avoidanceStrategy: string;
+  }>;
 }
 
 export interface GameState {
@@ -64,6 +130,14 @@ export interface GameState {
   currentLocation: string;
   environmentalDetails: EnvironmentalDetail[];
   relationshipConflicts: RelationshipConflict[];
+  // RbD tracking
+  lastRbDLosses?: RbDLoss[]; // What was lost in the most recent Return by Death
+  rbdTrigger?: 'ai_automatic' | 'ai_narrative' | 'manual'; // How RbD was triggered
+  checkpointReason?: string; // Why the current checkpoint was set
+  // Loop Intelligence
+  loopIntelligence?: LoopIntelligence; // Strategic analysis of previous loop
+  lastDeathCause?: string; // What caused the most recent death
+  worldState?: WorldState;
 }
 
 // Lorebook system
@@ -133,7 +207,7 @@ export interface EnvironmentalDetail {
   id: string;
   location: string;
   description: string;
-  interactionType: 'EXAMINE' | 'INTERACT' | 'LORE' | 'QUEST';
+  interactionType: 'EXAMINE' | 'INTERACT' | 'LORE' | 'QUEST' | 'MOVE';
   loreId?: string;
   questId?: string;
   isDiscovered: boolean;
@@ -143,14 +217,14 @@ export interface EnvironmentalDetail {
 // Relationship conflict system
 export interface RelationshipConflict {
   id: string;
-  characters: string[]; // Characters involved in conflict
-  type: 'JEALOUSY' | 'RIVALRY' | 'ROMANCE' | 'POLITICAL' | 'PERSONAL';
-  severity: number; // 1-10 scale
+  charactersInvolved: string[]; // Characters involved in conflict
   description: string;
-  triggers: string[]; // Actions that can escalate/resolve
-  consequences: ConflictConsequence[];
-  isActive: boolean;
-  startedAt: Date;
+  status: 'ACTIVE' | 'RESOLVED' | 'DORMANT';
+  type?: 'JEALOUSY' | 'RIVALRY' | 'ROMANCE' | 'POLITICAL' | 'PERSONAL';
+  severity?: number; // 1-10 scale
+  triggers?: string[]; // Actions that can escalate/resolve
+  consequences?: ConflictConsequence[];
+  startedAt?: Date;
   resolvedAt?: Date;
 }
 

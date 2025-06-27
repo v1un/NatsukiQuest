@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { GameContext } from '@/contexts/GameContext';
 import { Skeleton } from '../ui/skeleton';
+import { useLocationAwareCharacters, useCharacterLocationStats } from '@/hooks/useLocationAwareCharacters';
 
 
 export default function CharacterBonds() {
@@ -34,7 +36,9 @@ export default function CharacterBonds() {
     );
   }
 
-  const characters = gameState.characters;
+  // Use the location-aware characters hook
+  const { charactersInLocation, locationSummary } = useLocationAwareCharacters(gameState);
+  const { otherLocations } = useCharacterLocationStats(gameState);
 
   // Helper function to get character-specific color
   const getCharacterColor = (name: string, affinity: number) => {
@@ -60,7 +64,26 @@ export default function CharacterBonds() {
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-3">
-        {characters.map((char, index) => {
+        {/* Location header */}
+        <div className="mb-4 p-3 rounded-lg bg-muted/50 border border-border/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">📍 {locationSummary.currentLocation}</p>
+              <p className="text-xs text-muted-foreground">
+                {locationSummary.charactersHere === 0 
+                  ? "No characters here" 
+                  : `${locationSummary.charactersHere} character${locationSummary.charactersHere !== 1 ? 's' : ''} present`
+                }
+              </p>
+            </div>
+            {locationSummary.totalCharacters > locationSummary.charactersHere && (
+              <Badge variant="outline" className="text-xs">
+                {locationSummary.charactersElsewhere} elsewhere
+              </Badge>
+            )}
+          </div>
+        </div>
+        {charactersInLocation.map((char, index) => {
           const affinityInfo = getAffinityLabel(char.affinity);
           return (
             <Card 
@@ -101,6 +124,11 @@ export default function CharacterBonds() {
                     <div className={`text-xs font-medium ${affinityInfo.color} mt-1`}>
                       {affinityInfo.label}
                     </div>
+                    {char.currentLocation && (
+                      <div className="text-xs text-muted-foreground mt-1 truncate">
+                        📍 {char.currentLocation}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -139,10 +167,32 @@ export default function CharacterBonds() {
           );
         })}
         
-        {characters.length === 0 && (
+        {charactersInLocation.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">
-            <p className="text-sm">No character relationships discovered yet.</p>
-            <p className="text-xs mt-1">Interact with characters to build bonds.</p>
+            <p className="text-sm">No characters in this location.</p>
+            <p className="text-xs mt-1">
+              {locationSummary.totalCharacters === 0 
+                ? "Interact with characters to build bonds."
+                : `Characters you know are in other locations. Current: ${locationSummary.currentLocation}`
+              }
+            </p>
+            {locationSummary.charactersElsewhere > 0 && (
+              <div className="mt-4">
+                <p className="text-xs font-medium mb-2">Characters elsewhere ({locationSummary.charactersElsewhere}):</p>
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {otherLocations.slice(0, 3).map(location => (
+                    <Badge key={location} variant="outline" className="text-xs">
+                      {location}
+                    </Badge>
+                  ))}
+                  {otherLocations.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{otherLocations.length - 3} more
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
