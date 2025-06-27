@@ -12,7 +12,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { gameTools } from '@/ai/tools';
+import { allGameTools } from '@/ai/tools';
+import type { EnvironmentalDetail } from '@/lib/types';
 
 // Schemas for structured data matching lib/types.ts
 const CharacterSchema = z.object({
@@ -47,6 +48,17 @@ const AiGameMasterInputSchema = z.object({
   skills: z.array(SkillSchema).describe("The player's current skills."),
   memory: z.string().optional().describe("A summary of past critical events and choices to maintain continuity."),
   injectedLore: z.string().optional().describe("Contextually relevant lore injected by the lorebook system."),
+  currentLocation: z.string().optional().describe("The player's current location ID."),
+  previousLocation: z.string().optional().describe("The player's previous location ID for detecting location changes."),
+  environmentalDetails: z.array(z.object({
+    id: z.string(),
+    location: z.string(),
+    description: z.string(),
+    interactionType: z.enum(['EXAMINE', 'INTERACT', 'LORE', 'QUEST']),
+    loreId: z.string().optional(),
+    questId: z.string().optional(),
+    isDiscovered: z.boolean(),
+  })).optional().describe("Environmental details available at the current location."),
 });
 export type AiGameMasterInput = z.infer<typeof AiGameMasterInputSchema>;
 
@@ -79,6 +91,11 @@ const prompt = ai.definePrompt({
   3. **updatePlayerStats** - Modify player health, add new skills, or change attributes
   4. **performSkillCheck** - Execute dice rolls for skill checks (lockpicking, persuasion, combat, etc.)
   5. **updateWorldState** - Set story flags, quest progress, or unlock new areas
+  6. **environmentalStorytelling** - Creates environmental details for locations (call on location changes)
+  7. **generateSideQuest** - Creates new side quests based on story beats and locations
+  8. **reputationManager** - Adjusts faction standings and reputation after player choices
+  9. **resolveRelationshipConflict** - Resolves conflicts between characters after choices
+  10. **lorebookManager** - Marks lore as discovered when interacting with LORE environmental details
 
   **Core Directives:**
   1.  **Advance the Narrative:** Based on the player's choice, write the next part of the story. The narrative should be descriptive, engaging, and faithful to the tone of Re:Zero.
@@ -87,10 +104,15 @@ const prompt = ai.definePrompt({
       - If player attempts a skill check, use performSkillCheck to determine success
       - If player takes damage or heals, use updatePlayerStats to modify health
       - If story progress occurs, use updateWorldState to track it
-  3.  **Manage & Update Characters:** You are in full control of the character list. Based on the narrative, update affinities and statuses for existing characters.
-  4.  **Determine Fate:** Decide if the player's choice leads to a "Game Over" state (i.e., death). If so, set 'isGameOver' to true.
-  5.  **Provide New Choices:** Conclude your narrative by presenting 1-4 compelling and relevant choices for the player to make next.
-  6.  **Maintain Continuity:** Use the 'memory' and 'injectedLore' to ensure the story is consistent and rich with detail.
+  3.  **AI Narrative Integration:** AUTOMATICALLY trigger narrative AI systems when appropriate:
+      - **Location Changes:** Call environmentalStorytelling when currentLocation != previousLocation
+      - **Key Story Beats:** Call generateSideQuest during significant narrative moments or discoveries
+      - **After Player Choices:** Use reputationManager and resolveRelationshipConflict after impactful decisions
+      - **Lore Interactions:** Call lorebookManager when player interacts with environmental details where interactionType === 'LORE'
+  4.  **Manage & Update Characters:** You are in full control of the character list. Based on the narrative, update affinities and statuses for existing characters.
+  5.  **Determine Fate:** Decide if the player's choice leads to a "Game Over" state (i.e., death). If so, set 'isGameOver' to true.
+  6.  **Provide New Choices:** Conclude your narrative by presenting 1-4 compelling and relevant choices for the player to make next.
+  7.  **Maintain Continuity:** Use the 'memory' and 'injectedLore' to ensure the story is consistent and rich with detail.
 
   **Game Context:**
   - **User ID:** {{{userId}}} (use this for all tool calls)
@@ -98,6 +120,9 @@ const prompt = ai.definePrompt({
   - **Player's Choice:** "{{{playerChoice}}}"
   - **Memory (Past Events):** {{{memory}}}
   - **Relevant Lore:** {{{injectedLore}}}
+  - **Current Location:** {{{currentLocation}}}
+  - **Previous Location:** {{{previousLocation}}}
+  - **Environmental Details:** {{json environmentalDetails}}
   
   **Current Player State:**
   - **Characters & Affinity:** {{json characters}}
@@ -109,6 +134,13 @@ const prompt = ai.definePrompt({
   - Player says "I try to pick the lock" → Use performSkillCheck for lockpicking skill
   - Player takes damage in combat → Use updatePlayerStats to reduce health
   - Player completes a quest → Use updateWorldState to mark quest as complete
+  
+  **AI Narrative System Usage:**
+  - Location change detected → Call environmentalStorytelling with new locationId
+  - Major story event occurs → Call generateSideQuest with current location and appropriate difficulty
+  - Player makes faction-affecting choice → Call reputationManager to adjust standings
+  - Characters have relationship tension → Call resolveRelationshipConflict after player choice
+  - Player examines lore detail (interactionType === 'LORE') → Call lorebookManager to mark lore discovered
 
   Now, based on the player's choice, generate the next state of the game. Use tools when appropriate to make real changes to the game world!
   `,
@@ -122,7 +154,7 @@ const aiGameMasterFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input, {
-      tools: gameTools,
+      tools: allGameTools,
       maxTurns: 10, // Allow multiple tool calls per turn
     });
     return output!;

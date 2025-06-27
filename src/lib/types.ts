@@ -6,6 +6,29 @@ export interface Character {
   avatar: string; // URL to placeholder
 }
 
+// Database model interfaces to match Prisma schema
+export interface User {
+  id: string;
+  name?: string;
+  email?: string;
+  emailVerified?: Date;
+  image?: string;
+  gameSaves: GameSave[];
+  loreEntries: LoreEntry[];
+  quests: Quest[];
+  reputations: Reputation[];
+  environmentalDetails: EnvironmentalDetail[];
+  relationshipConflicts: RelationshipConflict[];
+}
+
+export interface GameSave {
+  id: string;
+  state: GameState;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+}
+
 export interface Item {
   id: string;
   name: string;
@@ -21,7 +44,9 @@ export interface Skill {
 }
 
 export interface GameState {
+  userId?: string; // Added to track user
   narrative: string;
+  currentText?: string; // Added for backwards compatibility
   choices: string[];
   characters: Character[];
   inventory: Item[];

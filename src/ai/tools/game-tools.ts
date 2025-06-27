@@ -438,6 +438,234 @@ export const updateWorldState = ai.defineTool(
   }
 );
 
+// ============================================================================
+// NEW AI TOOLS FOR GAME MANAGEMENT
+// ============================================================================
+
+export const reputationManager = ai.defineTool(
+  {
+    name: 'reputationManager',
+    description: 'Adjusts faction standings and writes a reputation change log.',
+    inputSchema: z.object({
+      factionId: z.string().describe('ID of the faction whose reputation is to be adjusted'),
+      userId: z.string().describe('The player\'s user ID'),
+      change: z.number().describe('Amount to adjust reputation by'),
+    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      updatedReputation: z.number().describe('The new reputation value'),
+    }),
+  },
+  async (input) => {
+    // Placeholder for helper function
+    const writeReputationChange = async (factionId: string, userId: string, change: number) => {
+      // Logic to adjust and log the reputation change
+      return { success: true, updatedReputation: 100 + change }; // Example logic
+    };
+
+    try {
+      const result = await writeReputationChange(input.factionId, input.userId, input.change);
+      return {
+        success: result.success,
+        message: `Reputation adjusted by ${input.change} for user ${input.userId} in faction ${input.factionId}`,
+        updatedReputation: result.updatedReputation,
+      };
+    } catch (error) {
+      console.error('Error managing reputation:', error);
+      return {
+        success: false,
+        message: 'Failed to adjust reputation due to error',
+        updatedReputation: 0,
+      };
+    }
+  }
+);
+
+export const generateSideQuest = ai.defineTool(
+  {
+    name: 'generateSideQuest',
+    description: 'Creates a quest with objectives and rewards.',
+    inputSchema: z.object({
+      location: z.string().describe('Location for the quest'),
+      difficulty: z.number().optional().describe('Level of difficulty for the quest'),
+    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      quest: z.object({
+        id: z.string(),
+        name: z.string(),
+        objectives: z.array(z.string()),
+        rewards: z.array(z.string()),
+      }).optional(),
+    }),
+  },
+  async (input) => {
+    // Placeholder for helper function
+    const createQuest = async (location: string, difficulty?: number) => {
+      // Logic to generate a quest
+      return {
+        success: true,
+        quest: {
+          id: 'quest_123',
+          name: 'The Lost Treasure',
+          objectives: ['Find the map', 'Reach the hidden cove', 'Defeat the guardian'],
+          rewards: ['100 gold', 'Rare gem'],
+        },
+      };
+    };
+
+    try {
+      const result = await createQuest(input.location, input.difficulty);
+      return {
+        success: result.success,
+        message: result.success ? 'Quest generated successfully' : 'Failed to generate quest',
+        quest: result.quest,
+      };
+    } catch (error) {
+      console.error('Error generating side quest:', error);
+      return {
+        success: false,
+        message: 'Failed to generate side quest due to error',
+      };
+    }
+  }
+);
+
+export const basicRelationshipConflictResolver = ai.defineTool(
+  {
+    name: 'resolveRelationshipConflict',
+    description: 'Resolves conflicts and adjusts relationships.',
+    inputSchema: z.object({
+      relationshipId: z.string().describe('ID of the relationship to check for conflicts'),
+      resolutionMethod: z.string().describe('Method to resolve the conflict'),
+    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      updatedAffinities: z.record(z.string(), z.number()).optional(),
+    }),
+  },
+  async (input) => {
+    // Placeholder for helper function
+    const resolveConflict = async (relationshipId: string, method: string) => {
+      // Logic to resolve conflicts and adjust relationships
+      return {
+        success: true,
+        updatedAffinities: { 'npc_123': 75 },
+      };
+    };
+
+    try {
+      const result = await resolveConflict(input.relationshipId, input.resolutionMethod);
+      return {
+        success: result.success,
+        message: result.success ? 'Conflict resolved successfully' : 'Failed to resolve conflict',
+        updatedAffinities: result.updatedAffinities,
+      };
+    } catch (error) {
+      console.error('Error resolving relationship conflict:', error);
+      return {
+        success: false,
+        message: 'Failed to resolve conflict due to error',
+      };
+    }
+  }
+);
+
+export const environmentalStorytelling = ai.defineTool(
+  {
+    name: 'environmentalStorytelling',
+    description: 'Creates or retrieves environmental detail snippets.',
+    inputSchema: z.object({
+      locationId: z.string().describe('ID of the location to get environmental details for'),
+    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      details: z.array(z.object({
+        id: z.string(),
+        description: z.string(),
+      })).optional(),
+    }),
+  },
+  async (input) => {
+    // Placeholder for helper function
+    const getEnvironmentalDetails = async (locationId: string) => {
+      // Logic to get or create environmental details
+      return {
+        success: true,
+        details: [
+          { id: 'detail_001', description: 'An ancient mural telling the story of a forgotten hero.' },
+        ],
+      };
+    };
+
+    try {
+      const result = await getEnvironmentalDetails(input.locationId);
+      return {
+        success: result.success,
+        message: result.success ? 'Environmental details retrieved' : 'Failed to retrieve details',
+        details: result.details,
+      };
+    } catch (error) {
+      console.error('Error in retrieving environmental storytelling:', error);
+      return {
+        success: false,
+        message: 'Failed to retrieve environmental details due to error',
+      };
+    }
+  }
+);
+
+export const lorebookManager = ai.defineTool(
+  {
+    name: 'lorebookManager',
+    description: 'Marks lore as discovered and returns the updated lorebook.',
+    inputSchema: z.object({
+      loreId: z.string().describe('ID of the lore to be marked as discovered'),
+      userId: z.string().describe('The player\'s user ID'),
+    }),
+    outputSchema: z.object({
+      success: z.boolean(),
+      message: z.string(),
+      updatedLorebook: z.array(z.object({
+        id: z.string(),
+        name: z.string(),
+        discovered: z.boolean(),
+      })).optional(),
+    }),
+  },
+  async (input) => {
+    // Placeholder for helper function
+    const markLoreAsDiscovered = async (loreId: string, userId: string) => {
+      // Logic to mark lore and update lorebook
+      return {
+        success: true,
+        updatedLorebook: [
+          { id: loreId, name: 'Ancient Civilization', discovered: true },
+        ],
+      };
+    };
+
+    try {
+      const result = await markLoreAsDiscovered(input.loreId, input.userId);
+      return {
+        success: result.success,
+        message: result.success ? 'Lore marked as discovered' : 'Failed to mark lore',
+        updatedLorebook: result.updatedLorebook,
+      };
+    } catch (error) {
+      console.error('Error managing lorebook:', error);
+      return {
+        success: false,
+        message: 'Failed to update lorebook due to error',
+      };
+    }
+  }
+);
+
 // Export all tools as an array for easy importing
 export const gameTools = [
   updatePlayerInventory,
@@ -445,4 +673,9 @@ export const gameTools = [
   updatePlayerStats,
   performSkillCheck,
   updateWorldState,
+  reputationManager,
+  generateSideQuest,
+  basicRelationshipConflictResolver,
+  environmentalStorytelling,
+  lorebookManager,
 ];

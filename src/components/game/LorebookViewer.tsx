@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { 
   BookOpen, 
   Search, 
@@ -19,7 +21,9 @@ import {
   Crown,
   Swords,
   Heart,
-  Globe
+  Globe,
+  ArrowUpDown,
+  ChevronDown
 } from 'lucide-react';
 import { LoreEntry } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -56,6 +60,22 @@ export default function LorebookViewer({ loreEntries, discoveredLoreIds, onLoreS
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLore, setSelectedLore] = useState<LoreEntry | null>(null);
+  const [newlyDiscoveredIds, setNewlyDiscoveredIds] = useState<string[]>([]);
+  const [prevDiscoveredIds, setPrevDiscoveredIds] = useState<string[]>(discoveredLoreIds);
+
+  // Detect new lore discoveries for animations
+  useEffect(() => {
+    const newIds = discoveredLoreIds.filter(id => !prevDiscoveredIds.includes(id));
+    if (newIds.length > 0) {
+      setNewlyDiscoveredIds(newIds);
+      // Clear the animation after a few seconds
+      const timer = setTimeout(() => {
+        setNewlyDiscoveredIds([]);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+    setPrevDiscoveredIds(discoveredLoreIds);
+  }, [discoveredLoreIds, prevDiscoveredIds]);
 
   // Filter discovered lore entries
   const discoveredLore = useMemo(() => {
@@ -97,7 +117,7 @@ export default function LorebookViewer({ loreEntries, discoveredLoreIds, onLoreS
         </Badge>
       </div>
 
-      <div className="flex-1 flex">
+      <div className="flex-1 hidden md:flex">
         {/* Left Panel - Lore List */}
         <div className="w-1/2 border-r flex flex-col">
           {/* Search and Filters */}
@@ -139,13 +159,15 @@ export default function LorebookViewer({ loreEntries, discoveredLoreIds, onLoreS
                 filteredLore.map(entry => {
                   const IconComponent = categoryIcons[entry.category as keyof typeof categoryIcons] || Tag;
                   const isSelected = selectedLore?.id === entry.id;
+                  const isNewlyDiscovered = newlyDiscoveredIds.includes(entry.id);
                   
                   return (
                     <Card 
                       key={entry.id}
                       className={cn(
                         "cursor-pointer transition-all hover:shadow-md",
-                        isSelected && "ring-2 ring-primary"
+                        isSelected && "ring-2 ring-primary",
+                        isNewlyDiscovered && "animate-pulse ring-2 ring-green-400 bg-green-50 dark:bg-green-950"
                       )}
                       onClick={() => handleLoreClick(entry)}
                     >
@@ -207,7 +229,7 @@ export default function LorebookViewer({ loreEntries, discoveredLoreIds, onLoreS
         </div>
 
         {/* Right Panel - Lore Details */}
-        <div className="w-1/2 flex flex-col">
+        <div className="w-1/2 hidden md:flex flex-col">
           {selectedLore ? (
             <>
               <div className="p-4 border-b">
@@ -281,7 +303,7 @@ export default function LorebookViewer({ loreEntries, discoveredLoreIds, onLoreS
               </ScrollArea>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-center">
+            <div className="flex-1 hidden md:flex items-center justify-center text-center">
               <div className="text-muted-foreground">
                 <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p>Select a lore entry to view details</p>
@@ -291,6 +313,160 @@ export default function LorebookViewer({ loreEntries, discoveredLoreIds, onLoreS
           )}
         </div>
       </div>
-    </div>
-  );
+
+      {/* Mobile-only view */}
+        <div className="flex-1 md:hidden">
+          <div className="p-4 space-y-3 border-b">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search lore entries..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {categories.map(category => (
+                <Button
+                  key={category}
+                  variant={selectedCategory === category ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(category)}
+                  className="text-xs"
+                >
+                  {category === 'all' ? 'All' : category}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <ScrollArea className="flex-1">
+            <div className="p-4 space-y-3">
+              {filteredLore.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p>No lore entries found</p>
+                  <p className="text-sm">Explore the world to discover new lore!</p>
+                </div>
+              ) : (
+                filteredLore.map(entry => {
+                  const IconComponent = categoryIcons[entry.category as keyof typeof categoryIcons] || Tag;
+                  
+                  return (
+                    <Sheet key={entry.id}>
+                      <SheetTrigger asChild>
+                        <Card className="cursor-pointer transition-all hover:shadow-md">
+                          <CardHeader className="pb-2">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-2">
+                                <IconComponent className="h-4 w-4 text-primary" />
+                                <CardTitle className="text-sm font-medium">
+                                  {entry.title}
+                                </CardTitle>
+                              </div>
+                              <Badge 
+                                variant="secondary" 
+                                className={cn("text-xs", categoryColors[entry.category as keyof typeof categoryColors])}
+                              >
+                                {entry.category}
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="pt-0">
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {entry.content}
+                            </p>
+                            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                              {entry.location && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  <span>{entry.location}</span>
+                                </div>
+                              )}
+                              {entry.discoveredAt && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{new Date(entry.discoveredAt).toLocaleDateString()}</span>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </SheetTrigger>
+                      <SheetContent side="right" className="w-full sm:max-w-md">
+                        <SheetHeader>
+                          <SheetTitle className="flex items-center gap-2">
+                            <IconComponent className="h-5 w-5 text-primary" />
+                            {entry.title}
+                          </SheetTitle>
+                        </SheetHeader>
+                        <ScrollArea className="flex-1 mt-4">
+                          <div className="space-y-4">
+                            <div>
+                              <Badge className={cn(categoryColors[entry.category as keyof typeof categoryColors])}>
+                                {entry.category}
+                              </Badge>
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                              {entry.location && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
+                                  <span>{entry.location}</span>
+                                </div>
+                              )}
+                              {entry.discoveredAt && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  <span>Discovered {new Date(entry.discoveredAt).toLocaleDateString()}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {entry.characters.length > 0 && (
+                              <div>
+                                <p className="text-sm font-medium mb-2">Related Characters:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {entry.characters.map(character => (
+                                    <Badge key={character} variant="outline" className="text-xs">
+                                      {character}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {entry.tags.length > 0 && (
+                              <div>
+                                <p className="text-sm font-medium mb-2">Tags:</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {entry.tags.map(tag => (
+                                    <Badge key={tag} variant="outline" className="text-xs">
+                                      {tag}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                              {entry.content.split('\n').map((paragraph, index) => (
+                                <p key={index} className="mb-3">
+                                  {paragraph}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                        </ScrollArea>
+                      </SheetContent>
+                    </Sheet>
+                  );
+                })
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      </div>
+    );
 }
